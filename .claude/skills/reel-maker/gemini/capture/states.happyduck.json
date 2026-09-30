@@ -1,0 +1,63 @@
+﻿{
+  "viewport": {
+    "width": 520,
+    "height": 750,
+    "deviceScaleFactor": 2
+  },
+  "states": [
+    {
+      "id": "ui_01_smartcut_empty",
+      "name": "Smart Cut Empty State",
+      "tab": "smartcut",
+      "action": "empty"
+    },
+    {
+      "id": "ui_02_smartcut_waveform",
+      "name": "Smart Cut Waveform & Threshold",
+      "tab": "smartcut",
+      "action": "waveform"
+    },
+    {
+      "id": "ui_03_smartcut_repetition_mode",
+      "name": "Smart Cut Repetition Mode Active",
+      "tab": "smartcut",
+      "action": "repetition"
+    },
+    {
+      "id": "ui_04_smartcut_silence_mode",
+      "name": "Smart Cut Silence Mode Active",
+      "tab": "smartcut",
+      "action": "silence"
+    },
+    {
+      "id": "ui_05_smartcut_progress",
+      "name": "Smart Cut Analysis / Processing Progress",
+      "tab": "smartcut",
+      "action": "progress"
+    },
+    {
+      "id": "ui_06_caption_templates",
+      "name": "Captions Style Presets & Templates Gallery",
+      "tab": "captions",
+      "action": "templates"
+    },
+    {
+      "id": "ui_07_caption_generating",
+      "name": "Captions Cloud Generation in Progress",
+      "tab": "captions",
+      "action": "generating"
+    },
+    {
+      "id": "ui_08_caption_done_edit_button",
+      "name": "Captions Completed with Edit Button",
+      "tab": "captions",
+      "action": "done"
+    },
+    {
+      "id": "ui_09_caption_editor",
+      "name": "Caption Editor Modal Open with Active Rows",
+      "tab": "captions",
+      "action": "editor"
+    }
+  ]
+}

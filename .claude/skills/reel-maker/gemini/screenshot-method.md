@@ -32,3 +32,9 @@ The UI chrome is the real panel, but waveform data, progress percentage and edit
 - After capturing, OPEN each PNG and verify it shows the requested state before pushing (do not trust the script log).
 - Capture both English and Arabic if the video is Arabic.
 - Message 004 asks Gemini for `docs/capture-method.md` (prerequisites, exact steps, how screen recordings were made, Arabic switching) and a generalized `tools/capture_panel.js`; merge his answers into this file when they arrive.
+
+## Update after message 004/005 (Gemini's own docs are now in `capture/`)
+- `capture/capture-method.md` (Gemini's full doc: `.debug` file with `<Host Name="PPRO" Port="8889"/>` + registry `HKCU:\Software\Adobe\CSXS.9/.10/.11\PlayerDebugMode="1"`, restart Premiere, selectors per tab, screen recordings by `ffmpeg gdigrab` 1920x1080@30 with mouse drawn) and `capture/capture_panel.js` + `capture/states.happyduck.json` (generalized tool: `node capture_panel.js --lang all`) are the reference for any new capture.
+- `ui_09_caption_editor.png` was FIXED (real editor modal; needs `.cap-review-overlay.active` for opacity 1).
+- His Arabic set `ar/ui_01..09` was defective when I checked: 8/9 still English UI and ui_02..05 had an empty waveform. Always open every capture and check language/direction and content before accepting; ask for a re-capture with an explicit wait + `document.documentElement.dir==='rtl'` check.
+- The doc's real/staged table had inconsistencies (ui_07 74% vs 58% delivered; ui_08 called real but forced by JS). Treat ui_02, 05, 07, 08, 09 as staged.
