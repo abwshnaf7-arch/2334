@@ -23,12 +23,15 @@ const FPS=30;
   const Z="if(lt(t,4),1+0.1*exp(-14*t)+0.015*t,1)";
   // pass 2: front layer as an image sequence (rock-solid constant frame rate, no pipe timing issues)
   fs.mkdirSync('work/front',{recursive:true});
+  const RG=(process.env.RANGES||'').split(',').filter(Boolean).map(x=>x.split('-').map(Number));
   for(let i=0;i<n;i++){
+    if(RG.length&&!RG.some(([a,b])=>i>=a&&i<=b))continue;
     await pg.evaluate(t=>window.renderFrame(t,'front'),(START+i)/FPS);
     await pg.locator('canvas').screenshot({omitBackground:true,path:`work/front/f${String(i+1).padStart(4,'0')}.png`});
     if(i%60==0)console.log('frame',i,'/',n);
   }
   await b.close();
+  if(process.env.NOFF){console.log('frames done');return}
   const ss=START?['-ss',String(START/FPS)]:[];
   const ff=spawn(FF,['-y','-loglevel',LL,...ss,'-i',inp,...ss,'-i','work/back.mov',...ss,'-i','work/person.mov','-framerate',String(FPS),'-i','work/front/f%04d.png',
     '-filter_complex',`[0:v]scale=w='trunc(1080*(${Z})/2)*2':h=-2:eval=frame,crop=1080:1920[v0];[2:v]scale=w='trunc(1080*(${Z})/2)*2':h=-2:eval=frame,crop=1080:1920[p0];[v0][1:v]overlay=0:0:eof_action=pass[a];[a][p0]overlay=0:0:eof_action=pass:format=auto[b];[b][3:v]overlay=0:0:format=auto,format=yuv420p[o]`,

@@ -72,7 +72,7 @@ def rumble(dur=5,g=1):
     n=int(SR*dur); x=bp(rng.standard_normal(n),30,120)
     t=np.linspace(0,1,n); return x*np.minimum(1,t*10)*np.minimum(1,(1-t)*10)*g
 
-WS=[4,6,11,14,17,22]
+WS=[4,6,11,14,17,22.3]
 # ---- scene 1: HOOK
 place(boom(1.3,46),0.0,.9); place(hit(.4,90),0.0,.6); place(whoosh(.45,300,7000),0.0,.5)
 for k in range(6): place(click(rng.uniform(2500,6000),.03),0.02+k*.045,.35)   # glitch ticks
@@ -125,10 +125,10 @@ place(boom(1.2,50),17.32,.7); place(chime(1319,1.6),17.35,.35); place(sparkle(1.
 place(rumble(4.6,1),17.3,.15)
 place(riser(.6,300,2500),21.4,.3)
 # ---- scene 7
-place(whoosh(.5,500,5500),21.8,.55); place(boom(1.3,58),22.06,.75); place(hit(.4,140),22.08,.5); place(chime(1568,1.5),22.15,.3)
-for k in range(int(DUR-22.6)):
-    tt=22.6+k+ (0.0)
-    place(tick(1900 if k<int(DUR-22.6)-3 else 2600),tt+0.37,.22)
+place(whoosh(.5,500,5500),22.1,.5); place(boom(1.3,58),22.36,.75); place(hit(.4,140),22.38,.5); place(chime(1568,1.5),22.45,.3)
+for k in range(int(DUR-22.9)):
+    tt=22.9+k+ (0.0)
+    place(tick(1900 if k<int(DUR-22.9)-3 else 2600),tt+0.37,.22)
 place(chime(2093,1.2),DUR-.9,.2)
 # ---- master: soft compress + normalize
 m=np.tanh(out*1.3)/1.3
