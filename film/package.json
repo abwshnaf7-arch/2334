@@ -1,0 +1,1 @@
+{ "name": "asteroid-film", "version": "1.0.0", "private": true, "description": "Procedural motion-graphics film renderer", "dependencies": { "playwright-core": "^1.56.1" } }

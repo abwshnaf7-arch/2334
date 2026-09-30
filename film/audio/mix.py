@@ -1,4 +1,5 @@
-import numpy as np, wave
+import numpy as np, wave, os
+HERE=os.path.dirname(os.path.abspath(__file__))
 from scipy import signal
 SR=48000; TOTAL=125.9; N=int(SR*TOTAL)
 rs=np.random.RandomState(7)
@@ -18,7 +19,7 @@ def bp(x,f0,f1,order=2):
 def hp(x,fc,order=2):
     b,a=signal.butter(order,fc/(SR/2),'high'); return signal.lfilter(b,a,x)
 # ---------------- voice
-w=wave.open('/home/user/2334/work/vo.wav'); vo=np.frombuffer(w.readframes(w.getnframes()),dtype=np.int16).astype(np.float32)/32768
+w=wave.open(os.path.join(HERE,'..','assets','vo.wav')); vo=np.frombuffer(w.readframes(w.getnframes()),dtype=np.int16).astype(np.float32)/32768
 vo=signal.resample_poly(vo,2,1); voice=np.zeros(N); voice[:len(vo)]=vo[:N]
 voice=voice/np.max(np.abs(voice))*0.9
 # speech envelope for ducking
@@ -124,5 +125,5 @@ left=mix; right=(voice*1.0+ (bus*.7+wide*.3)*0.55)
 right=np.tanh(right*1.05)/np.tanh(1.05); right=right*np.clip(tt/.4,0,1)*np.clip((TOTAL-tt)/1.2,0,1); right=right/np.max(np.abs(right))*0.95
 st=np.stack([left,right],1)
 out=(st*32767).astype(np.int16)
-wf=wave.open('/home/user/2334/work/mix.wav','wb'); wf.setnchannels(2); wf.setsampwidth(2); wf.setframerate(SR); wf.writeframes(out.tobytes()); wf.close()
+wf=wave.open(os.path.join(HERE,'..','assets','mix.wav'),'wb'); wf.setnchannels(2); wf.setsampwidth(2); wf.setframerate(SR); wf.writeframes(out.tobytes()); wf.close()
 print('ok',len(out)/SR)
