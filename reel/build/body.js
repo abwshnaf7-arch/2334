@@ -88,7 +88,7 @@ scene(6.0, 14.7, el => {
 scene(14.4, 20.2, el => {
   const net = mk('canvas', '', el, null, { position: 'absolute', left: '0', top: '0', width: '1080px', height: '1200px' }); net.width = 1080; net.height = 1200;
   const glow = mk('div', '', el, '', { position: 'absolute', left: '240px', top: '210px', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(255,210,0,.5),transparent 65%)' });
-  const ai = mk('div', '', el, 'AI', { position: 'absolute', left: '340px', top: '330px', width: '400px', height: '400px', borderRadius: '50%', border: '10px solid #FFD200', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '210px', fontWeight: '900', color: '#FFD200', textShadow: '0 0 60px rgba(255,210,0,.8)', boxShadow: '0 0 90px rgba(255,210,0,.5),inset 0 0 60px rgba(255,210,0,.25)', background: 'rgba(9,10,12,.7)' });
+  const ai = mk('div', '', el, '', { display: 'none' });
   const duck = mk('img', '', el, null, { position: 'absolute', left: '320px', top: '290px', width: '440px', height: '440px', objectFit: 'contain' }); setImg(duck, 'assets/custom_duck.png');
   const ring1 = mk('div', '', el, '', { position: 'absolute', left: '280px', top: '250px', width: '520px', height: '520px', borderRadius: '50%', border: '8px solid #FFD200' });
   const name = mk('div', 'txt', el, 'Happy Duck AI', { top: '790px', fontSize: '116px', direction: 'ltr' });
@@ -101,17 +101,10 @@ scene(14.4, 20.2, el => {
   return { net, glow, ai, duck, ring1, name, row, pr, plus, duck2, tl, wand };
 }, (t, s) => {
   const { net, glow, ai, duck, ring1, name, row, pr, plus, duck2, tl, wand } = s.st;
-  // neural net
+  // 3D neural sphere + glass AI orb
   const c = net.getContext('2d'); c.clearRect(0, 0, 1080, 1200);
   const on = prog(t, T(8) - 0.1, 0.5) * (1 - prog(t, T(9) - 0.1, 0.35));
-  if (on > 0) {
-    const r = rnd(11), N = 26, pts = [];
-    for (let i = 0; i < N; i++) { const a = i / N * 6.283 + r() * .5, rad = 200 + r() * 250; pts.push([540 + Math.cos(a + t * 0.6) * rad, 520 + Math.sin(a + t * 0.6) * rad * 0.8]); }
-    c.globalAlpha = on; c.lineWidth = 3;
-    for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) { const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]); if (d < 330) { c.strokeStyle = `rgba(255,210,0,${0.5 * (1 - d / 330) * (0.5 + 0.5 * Math.sin(t * 6 + i))})`; c.beginPath(); c.moveTo(...pts[i]); c.lineTo(...pts[j]); c.stroke(); } }
-    pts.forEach((p, i) => { c.fillStyle = '#FFD200'; c.shadowColor = '#FFD200'; c.shadowBlur = 20; c.beginPath(); c.arc(p[0], p[1], 8 + 4 * Math.sin(t * 8 + i), 0, 7); c.fill(); });
-    c.shadowBlur = 0; c.globalAlpha = 1;
-  }
+  if (on > 0) drawAIOrb(c, t, on, prog(t, T(8) - 0.1, 0.7));
   const ap = eoB(prog(t, T(8), .6)) * (1 - prog(t, T(9) - 0.1, .3)); show(ai, ap); ai.style.transform = `scale(${0.4 + 0.6 * eoB(prog(t, T(8), .6))})`;
   const gp = eoB(prog(t, T(9) - 0.05, .6)); glow.style.opacity = clamp(gp); glow.style.transform = `scale(${0.5 + 0.6 * gp + 0.04 * Math.sin(t * 4)})`;
   pop(duck, t, T(9) - 0.05, 0.6, 0); duck.style.transform += ` translateY(${Math.sin(t * 3) * 10}px)`;
@@ -124,7 +117,7 @@ scene(14.4, 20.2, el => {
   // messy timeline -> clean by the wand
   const cln = prog(t, T(11) - 0.2, 1.4);
   tl.draw({ cuts: 1, flagS: (1 - prog(t, T(11) + 0.2, .4)), flagR: (1 - prog(t, T(11) + 0.3, .4)), sil: prog(t, T(11) + 0.2, 1.1), rep: prog(t, T(11) + 0.3, 1.1), clean: cln, pulse: t, play: -1, caps: 0 });
-  const tin = eo3(prog(t, T(10), .5)); tl.cv.style.opacity = tin; tl.cv.style.transform = `translateY(${(1 - tin) * 100}px) scale(.92)`;
+  const tin = eo3(prog(t, T(8) + 0.2, .5)); tl.cv.style.opacity = tin; tl.cv.style.transform = `translateY(${(1 - tin) * 100}px) scale(.92)`;
   show(wand, prog(t, T(11) - 0.3, .3) * (1 - prog(t, T(11) + 1.3, .3)));
   setXf(wand, 90 + eo3(cln) * 880, 1120 - Math.sin(cln * 3.14) * 60, 1, -25 + Math.sin(t * 20) * 10);
 });

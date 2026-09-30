@@ -86,3 +86,70 @@ function setRing(r, t, a, b, x, y, w, h, pulse = true) {
   place(r, x - w / 2 * k, y - h / 2 * k, w * k, h * k);
 }
 
+
+// ---- 3D neural sphere with a glass "AI" orb (canvas) ----
+const ORB_PTS = (() => { const n = 78, a = []; for (let i = 0; i < n; i++) { const y = 1 - 2 * (i + .5) / n, r = Math.sqrt(1 - y * y), th = i * 2.399963; a.push([Math.cos(th) * r, y, Math.sin(th) * r]); } return a; })();
+function drawAIOrb(c, t, on, grow) {
+  const cx = 540, cy = 520, g = eoB(grow), R = 400 * g, orbR = 215 * g, ry = t * 0.5, rx = 0.42;
+  const pr = ORB_PTS.map(p => {
+    const x1 = p[0] * Math.cos(ry) + p[2] * Math.sin(ry), z1 = -p[0] * Math.sin(ry) + p[2] * Math.cos(ry);
+    const y2 = p[1] * Math.cos(rx) - z1 * Math.sin(rx), z2 = p[1] * Math.sin(rx) + z1 * Math.cos(rx);
+    const k = 1200 / (1200 + z2 * R);
+    return { x: cx + x1 * R * k, y: cy + y2 * R * k * 0.9, z: z2, k };
+  });
+  c.save(); c.globalAlpha = on;
+  // ambient glow
+  const bgG = c.createRadialGradient(cx, cy, 20, cx, cy, 560);
+  bgG.addColorStop(0, 'rgba(255,190,0,.30)'); bgG.addColorStop(1, 'rgba(255,190,0,0)'); c.fillStyle = bgG; c.fillRect(0, 0, 1080, 1200);
+  const links = front => {
+    for (let i = 0; i < pr.length; i++) for (let j = i + 1; j < pr.length; j++) {
+      const A = pr[i], B = pr[j]; if ((A.z <= 0) !== front || (B.z <= 0) !== front) continue;
+      const d = Math.hypot(ORB_PTS[i][0] - ORB_PTS[j][0], ORB_PTS[i][1] - ORB_PTS[j][1], ORB_PTS[i][2] - ORB_PTS[j][2]);
+      if (d > 0.6) continue;
+      const pulse = 0.55 + 0.45 * Math.sin(t * 5 + i * 1.7);
+      c.strokeStyle = `rgba(255,${front ? 214 : 170},${front ? 60 : 0},${(1 - d / 0.6) * (front ? 0.95 : 0.35) * pulse})`;
+      c.lineWidth = (front ? 3 : 1.6) * (0.6 + 0.4 * (A.k + B.k) / 2 * 1.0);
+      c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.stroke();
+    }
+  };
+  const nodes = front => pr.forEach((p, i) => {
+    if ((p.z <= 0) !== front) return;
+    const r = (front ? 8.5 : 5) * p.k * (1 + 0.25 * Math.sin(t * 6 + i));
+    const ng = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 2.6);
+    ng.addColorStop(0, front ? '#fff7c2' : 'rgba(255,200,60,.8)'); ng.addColorStop(0.35, front ? '#FFD200' : 'rgba(255,190,0,.5)'); ng.addColorStop(1, 'rgba(255,190,0,0)');
+    c.fillStyle = ng; c.beginPath(); c.arc(p.x, p.y, r * 2.6, 0, 7); c.fill();
+  });
+  links(false); nodes(false);
+  // glass orb
+  c.save();
+  c.beginPath(); c.arc(cx, cy, orbR, 0, 7); c.fillStyle = '#08090b'; c.fill();
+  const body = c.createRadialGradient(cx - orbR * .35, cy - orbR * .4, orbR * .05, cx, cy, orbR);
+  body.addColorStop(0, 'rgba(255,214,90,.55)'); body.addColorStop(0.45, 'rgba(255,170,0,.16)'); body.addColorStop(1, 'rgba(255,140,0,.02)');
+  c.fillStyle = body; c.fill();
+  const rim = c.createRadialGradient(cx, cy, orbR * .8, cx, cy, orbR);
+  rim.addColorStop(0, 'rgba(255,210,0,0)'); rim.addColorStop(1, 'rgba(255,210,0,.85)'); c.fillStyle = rim; c.fill();
+  c.lineWidth = 6; c.strokeStyle = '#FFD200'; c.shadowColor = '#FFB800'; c.shadowBlur = 50; c.stroke(); c.shadowBlur = 0;
+  // specular highlight + lower bounce light
+  c.save(); c.translate(cx - orbR * .38, cy - orbR * .5); c.rotate(-0.6);
+  const sp = c.createRadialGradient(0, 0, 0, 0, 0, orbR * .38); sp.addColorStop(0, 'rgba(255,255,255,.75)'); sp.addColorStop(1, 'rgba(255,255,255,0)');
+  c.scale(1, 0.45); c.fillStyle = sp; c.beginPath(); c.arc(0, 0, orbR * .38, 0, 7); c.fill(); c.restore();
+  c.beginPath(); c.arc(cx, cy, orbR * .93, 0.25 * Math.PI, 0.75 * Math.PI); c.strokeStyle = 'rgba(255,220,120,.35)'; c.lineWidth = 8; c.stroke();
+  c.restore();
+  // extruded 3D "AI" text, perfectly centered (measured)
+  c.save(); c.font = `900 ${Math.round(190 * g)}px Cairo`; c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.direction = 'ltr';
+  const m = c.measureText('AI'), asc = m.actualBoundingBoxAscent, ty = cy + asc / 2;
+  for (let d = 16; d >= 1; d--) { c.fillStyle = `rgb(${90 + d * 2},${60 + d},0)`; c.fillText('AI', cx + d * 0.55, ty + d * 0.85); }
+  const tg = c.createLinearGradient(0, ty - asc, 0, ty); tg.addColorStop(0, '#fff8d0'); tg.addColorStop(0.5, '#FFD200'); tg.addColorStop(1, '#ffa800');
+  c.shadowColor = 'rgba(255,200,0,.9)'; c.shadowBlur = 40; c.fillStyle = tg; c.fillText('AI', cx, ty); c.shadowBlur = 0; c.restore();
+  links(true); nodes(true);
+  // tilted orbit rings with a travelling light
+  [[0.5, 0.30, 1], [-0.55, 0.26, -1]].forEach(([tilt, sq, dir]) => {
+    c.save(); c.translate(cx, cy); c.rotate(tilt + t * 0.12 * dir); c.scale(1, sq);
+    c.beginPath(); c.arc(0, 0, R * 0.98, 0, 7); c.strokeStyle = 'rgba(255,210,0,.5)'; c.lineWidth = 4 / sq * 0.4; c.stroke();
+    const a = t * 1.6 * dir; c.beginPath(); c.arc(Math.cos(a) * R * .98, Math.sin(a) * R * .98, 16 / Math.sqrt(sq) * .5, 0, 7);
+    c.fillStyle = '#fff'; c.shadowColor = '#FFD200'; c.shadowBlur = 40; c.fill(); c.restore();
+  });
+  // shockwave rings
+  for (let i = 0; i < 3; i++) { const p = ((t * 0.6) + i / 3) % 1; c.beginPath(); c.arc(cx, cy, orbR * (1 + p * 1.5), 0, 7); c.strokeStyle = `rgba(255,210,0,${(1 - p) * 0.35})`; c.lineWidth = 4; c.stroke(); }
+  c.restore();
+}
