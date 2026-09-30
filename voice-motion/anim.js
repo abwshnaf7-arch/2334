@@ -189,11 +189,11 @@ function initScenes() {
       const c = popS(lt, .15, .6, E.back); T(card, { y: 0, s: c.s, o: c.o }); card.setAttribute('transform', `translate(0 100) scale(${c.s}) translate(0 -100)`);
       const fc = popS(lt, .35, .7, E.back2); T(face, { y: -150, s: fc.s * (1 + .03 * Math.sin(t * 4)), r: Math.sin(t * 2.2) * 4, o: fc.o });
       const sm = p(lt, .7, .6, E.back); $('#mouth', face).setAttribute('d', `M-52 24 Q0 ${24 + sm * 62} 52 24`);
-      const pulse = [3.6, 3.9, 4.18].reduce((a, s) => a + (lt > s ? Math.exp(-(lt - s) * 7) * Math.sin((lt - s) * 25) : 0), 0);
+      const pulse = [3.4, 3.7, 3.98].reduce((a, s) => a + (lt > s ? Math.exp(-(lt - s) * 7) * Math.sin((lt - s) * 25) : 0), 0);
       stars.forEach((s, i) => { const k = popS(lt, .75 + i * .1, .5, E.back2); T(s.g, { x: (i - 2) * 118, y: 90, s: k.s * (1 + .22 * Math.max(0, pulse)), r: (1 - k.s) * -90 + pulse * 6, o: k.o });
-        const f = popS(lt, 1.5 + i * .42, .4, E.back2); T(s.f, { s: f.s, o: f.o }); });
+        const f = popS(lt, 1.3 + i * .42, .4, E.back2); T(s.f, { s: f.s, o: f.o }); });
       bars.forEach((b, i) => { const k = p(lt, 2.0 + i * .3, 1.0, E.expo), w = [500, 460, 490][i] * k; const r = $('#b' + i, b); r.setAttribute('width', Math.max(w, 26 * k)); T(b, { o: clamp((lt - 1.9) * 6) }); });
-      bursts.forEach((b, i) => { const base = [3.6, 3.9, 4.18][i % 3], k = (lt - base) / .8; if (k < 0 || k > 1) { T(b, { o: 0 }); return; }
+      bursts.forEach((b, i) => { const base = [3.4, 3.7, 3.98][i % 3], k = (lt - base) / .8; if (k < 0 || k > 1) { T(b, { o: 0 }); return; }
         const a = (i / 10) * Math.PI * 2 + i, d = 140 + k * 250; T(b, { x: Math.cos(a) * d * 1.15, y: 90 + Math.sin(a) * d, s: .28 * (1 - k * .5), r: k * 160, o: 1 - k }); });
     };
   });
@@ -392,7 +392,7 @@ function updateBg(t) {
      R = "reveal": the incoming scene is clipped by an animated shape on top of the outgoing scene
      C = "cover": animated shapes cover the screen, the scenes swap at the midpoint, shapes uncover
    ===================================================================== */
-const LEAD = .2, TW = .8;
+const LEAD = .2, TW = .8, HARD_CUTS = true;   // true = plain cuts, no transitions
 const SH = {
   circle: th => 1,
   flower: th => .72 + .28 * Math.cos(6 * th),
@@ -469,6 +469,7 @@ function initTrans() {
     s.vs = i === 0 ? -1 : s.t0 - LEAD;
     const nx = TR[i]; s.ve = nx ? (nx.C ? nx.ts + TW / 2 : nx.ts + TW) : 1e9;
     s.lead = i === 0 ? 0 : LEAD;
+    if (HARD_CUTS) { s.vs = i === 0 ? -1 : s.t0; s.ve = scenes[i + 1] ? scenes[i + 1].t0 : 1e9; s.lead = 0; }
   });
 }
 
@@ -535,7 +536,7 @@ function applyTrans(c, i, t) {
 }
 function updateTrans(t) {
   scenes.forEach(s => { s.g.removeAttribute('clip-path'); s.g.removeAttribute('filter'); s.g.style.opacity = 1; s.inner.removeAttribute('transform'); });
-  TR.forEach((c, i) => applyTrans(c, i, t));
+  if (!HARD_CUTS) TR.forEach((c, i) => applyTrans(c, i, t));
 }
 
 /* ---------- main ---------- */
