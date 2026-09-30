@@ -89,13 +89,18 @@ for k,tt in enumerate(np.linspace(4.15,5.1,14)): place(blip(500+k*70),tt,.14)
 place(click(2200),4.15,.35)
 place(riser(.45,300,2600),4.8,.3)
 place(boom(1.4,52),5.28,.75); place(chime(1568,1.4),5.3,.28); place(whoosh(.4,900,7000),5.2,.35)
-# ---- scene 3 (calm: 4 beats)
-B=1.25
-for i in range(4):
-    tt=6+i*B
-    place(whoosh(.6,400,3500),tt-.1,.22); place(hit(.3,100),tt+.03,.3)
-    place(snip(),tt+.35,.4)
-place(boom(.9,60),6.0,.25); place(riser(.8,400,3000),10.1,.2)
+# ---- scene 3: caption flow (calm)
+place(click(2400),6.95,.55); place(pop(520),6.98,.3); place(chime(1319,.8),7.0,.18)          # click Generate
+place(whoosh(.5,400,3500),6.55,.2)
+place(whoosh(.5,500,4000),7.0,.28); place(riser(1.0,300,1800),7.15,.16)
+for k in range(6): place(pop(600+k*70),7.25+k*.13,.24,pan=(-1)**k*.4)                          # words float up
+place(whoosh(.5,400,3800),8.05,.28)
+for k in range(6):
+    tt=8.2+.25+k*.2+.16
+    place(hit(.18,140+k*10),tt,.34); place(click(2200+k*150),tt,.3)                             # clips snap on timeline
+place(riser(1.5,250,2200),8.4,.14)
+place(whoosh(.5,500,4200),9.85,.28)
+place(chime(1568,1.5),10.32,.35); place(sparkle(1.0),10.32,.32); place(hit(.3,120),10.3,.3)     # success
 # ---- scene 4
 for k,tt in enumerate(np.linspace(11.45,12.0,5)): place(key(),tt+rng.uniform(0,.03),.55)
 place(click(2600),11.2,.45); place(pop(600),11.15,.2)
