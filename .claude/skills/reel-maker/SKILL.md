@@ -11,6 +11,9 @@ Reply to the owner in Egyptian Arabic, short, no jargon. The owner is not techni
 ## The one rule the owner insisted on
 **Show, don't tell.** Every idea must be a visual scene (motion graphics of the real timeline/UI, icons, metaphors, before/after), never a card with a sentence. On-screen text = the karaoke caption + tiny labels/numbers only. If a scene reads like a slide, redo it.
 
+## Composition rule (learned the hard way)
+**ONE hero per beat.** Each phrase/beat has a single large centered hero; the previous hero fully fades out (`beat(t,a,b)` helper) before the next fades in. Never stack 3+ animated things (clock + headphones + timeline + phone at once looked random and distracting). Keep the same hero across related beats (e.g. one timeline: silences -> repeats -> captions). No decorative wipes/overlays, no leftover emoji/elements from earlier beats (every created element must be hidden outside its beat). Always check stills at beat boundaries for leftovers.
+
 ## Pipeline (engine/ in this skill; copy it to a working dir, e.g. reel/)
 1. **Brief**: fill `brief-template.md` (ask the owner only what is missing; propose defaults). Get the script in final form.
 2. **Assets** must be real files inside the repo/workdir (you cannot read the owner's PC). Needed: logo, brand colors, Cairo font, 6-9 real UI screenshots, short screen recordings, ideally a raw-vs-edited clip. Verify each file by LOOKING at it (Read the PNG / extract frames): names and descriptions can be wrong (e.g. a "Caption Editor" screenshot was a duplicate of another screen).

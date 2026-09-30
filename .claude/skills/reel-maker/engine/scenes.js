@@ -160,121 +160,111 @@ function svgEl(html, parent, st) { const d = mk('div', '', parent, html, { posit
 function bigEmoji(parent, ch, x, y, size, extra) { return mk('div', '', parent, ch, { position: 'absolute', left: x + 'px', top: y + 'px', fontSize: size + 'px', lineHeight: 1, transform: 'translate(-50%,-50%)', textAlign: 'center', ...extra }); }
 function setXf(e, x, y, s = 1, r = 0) { e.style.transform = `translate(-50%,-50%) translate(${x}px,${y}px) scale(${s}) rotate(${r}deg)`; }
 
-// ================= S1  HOOK : tedious manual cutting, then "2026" =================
+// one hero per beat: visibility window with clean fade in/out
+const beat = (t, a, b, f = 0.25) => Math.min(prog(t, a, f), 1 - prog(t, b - f, f));
+
+// ================= S1  HOOK : ONE hero = the timeline being cut by hand, then the 2026 calendar =================
 scene(0, 6.3, el => {
-  const glow = mk('div', 'layer', el, '', { background: 'radial-gradient(700px 500px at 50% 45%,rgba(255,210,0,.10),transparent 70%)' });
-  const tl = makeTimeline(el, 980, 560, { left: '50px', top: '600px' });
-  const scis = bigEmoji(el, '✂️', 540, 380, 250);
-  const zoom = mk('div', '', el, '', { position: 'absolute', left: '0', top: '0', width: '1080px', height: '1920px' });
-  // manual caption typing row
-  const typ = mk('div', '', el, '', { position: 'absolute', left: '90px', top: '1260px', width: '900px', height: '150px', borderRadius: '30px', background: '#14161a', border: '3px solid #2b2e35' });
-  const chips = Array.from({ length: 7 }, (_, i) => mk('div', '', typ, '', { position: 'absolute', right: (24 + i * 116) + 'px', top: '34px', width: '100px', height: '82px', borderRadius: '16px', background: '#ff4fa3' }));
-  const cur = mk('div', '', typ, '', { position: 'absolute', top: '30px', width: '6px', height: '90px', background: '#fff' });
-  const kb = bigEmoji(el, '⌨️', 900, 1180, 110);
-  // calendar
+  const tl = makeTimeline(el, 980, 560, { left: '50px', top: '640px' });
   const cal = mk('div', '', el, '', { position: 'absolute', left: '190px', top: '560px', width: '700px', height: '760px', borderRadius: '44px', background: '#f5f5f7', boxShadow: '0 40px 120px rgba(0,0,0,.7)', overflow: 'hidden', transformOrigin: '50% 0' });
-  cal.innerHTML = '<div style="height:160px;background:#e5334b"></div><div style="position:absolute;left:0;right:0;top:170px;text-align:center;font-size:290px;font-weight:900;color:#15161a;direction:ltr;line-height:1.1">2026</div>' +
+  cal.innerHTML = '<div style="height:160px;background:#e5334b"></div><div style="position:absolute;left:0;right:0;top:200px;text-align:center;font-size:290px;font-weight:900;color:#15161a;direction:ltr;line-height:1.1">2026</div>' +
     '<svg width="700" height="760" style="position:absolute;left:0;top:0"><line class="x1" x1="120" y1="230" x2="580" y2="690" stroke="#e5334b" stroke-width="46" stroke-linecap="round" stroke-dasharray="700" stroke-dashoffset="700"/><line class="x2" x1="580" y1="230" x2="120" y2="690" stroke="#e5334b" stroke-width="46" stroke-linecap="round" stroke-dasharray="700" stroke-dashoffset="700"/></svg>';
-  return { tl, scis, chips, cur, typ, kb, cal };
+  return { tl, cal };
 }, (t, s) => {
-  const { tl, scis, chips, cur, typ, kb, cal } = s.st;
-  const A = 1 - prog(t, 3.25, 0.4);
-  const razor = prog(t, 0.45, 2.7);
-  tl.draw({ cuts: razor, razor: razor < 1 ? razor : -1, flagS: prog(t, 1.4, .5), flagR: prog(t, 1.9, .5), pulse: t, caps: 0, play: -1 });
-  const base = t < 3.25 ? 1 : 0;
-  tl.cv.style.opacity = A; tl.cv.style.filter = t > 3.0 ? `grayscale(1) blur(${prog(t, 3.0, .4) * 8}px)` : 'none';
-  show(scis, A * clamp(prog(t, .1, .3))); setXf(scis, 0, 0, 1 + 0.06 * Math.sin(t * 16), Math.sin(t * 14) * 12);
-  show(typ, A * prog(t, 1.2, .4)); show(kb, A * prog(t, 1.2, .3)); setXf(kb, 0, Math.abs(Math.sin(t * 12)) * -14);
-  const n = Math.floor(prog(t, 1.4, 1.8) * 7);
-  chips.forEach((c, i) => { c.style.opacity = i < n ? 1 : 0; c.style.transform = `scale(${i < n ? 1 : 0.6})`; });
-  cur.style.right = (24 + n * 116 - 6) + 'px'; cur.style.opacity = Math.sin(t * 12) > 0 ? 1 : 0.15;
-  // calendar flip + big X
-  const f = eoB(prog(t, 3.35, 0.6));
-  cal.style.opacity = prog(t, 3.3, 0.2); cal.style.display = cal.style.opacity <= 0 ? 'none' : 'block';
-  cal.style.transform = `perspective(1400px) rotateX(${(1 - f) * -90}deg) rotate(-4deg) scale(${0.9 + 0.1 * f}) translateX(${Math.sin(t * 40) * 6 * (1 - prog(t, 4.9, .3)) * prog(t, 4.2, .05)}px)`;
-  cal.querySelector('.x1').style.strokeDashoffset = 700 * (1 - eo3(prog(t, 4.25, 0.25)));
-  cal.querySelector('.x2').style.strokeDashoffset = 700 * (1 - eo3(prog(t, 4.45, 0.25)));
+  const { tl, cal } = s.st;
+  const razor = prog(t, 0.5, 2.6);
+  tl.draw({ cuts: razor, razor: razor < 1 ? razor : -1, flagS: prog(t, 1.5, .5), flagR: prog(t, 2.0, .5), caps: prog(t, 1.6, 1.5), pulse: t, play: -1 });
+  const v = beat(t, 0.05, 3.45, 0.3);
+  tl.cv.style.opacity = v; tl.cv.style.display = v <= 0.001 ? 'none' : 'block';
+  tl.cv.style.transform = `scale(${1 + 0.05 * prog(t, 0, 3.4)})`;
+  const f = eoB(prog(t, 3.5, 0.6));
+  cal.style.opacity = prog(t, 3.45, 0.2); cal.style.display = cal.style.opacity <= 0 ? 'none' : 'block';
+  cal.style.transform = `perspective(1400px) rotateX(${(1 - f) * -90}deg) rotate(-4deg) scale(${0.9 + 0.1 * f})`;
+  cal.querySelector('.x1').style.strokeDashoffset = 700 * (1 - eo3(prog(t, 4.3, 0.25)));
+  cal.querySelector('.x2').style.strokeDashoffset = 700 * (1 - eo3(prog(t, 4.5, 0.25)));
 });
 
-// ================= S2  PROBLEM : time drain =================
+// ================= S2  PROBLEM : REC -> the timeline (hero) -> giant clock -> stuck export =================
 scene(6.0, 14.7, el => {
   const sky = mk('canvas', '', el, null, { position: 'absolute', left: '0', top: '0', width: '1080px', height: '1920px' });
   sky.width = 540; sky.height = 960;
-  const tl = makeTimeline(el, 980, 560, { left: '50px', top: '470px' });
-  const rec = mk('div', '', el, '<span style="display:inline-block;width:34px;height:34px;border-radius:50%;background:#ff2d55;margin-left:14px;vertical-align:middle" class="dot"></span>REC', { position: 'absolute', left: '70px', top: '210px', fontSize: '54px', fontWeight: '900', padding: '10px 34px', borderRadius: '40px', background: 'rgba(0,0,0,.6)', border: '3px solid #ff2d55', direction: 'ltr' });
-  const clock = mk('div', '', el, '', { position: 'absolute', left: '760px', top: '150px', width: '250px', height: '250px' });
-  clock.innerHTML = '<svg width="250" height="250" viewBox="-125 -125 250 250"><circle r="118" fill="#101216" stroke="#FFD200" stroke-width="8"/>' + Array.from({ length: 12 }, (_, i) => `<line x1="0" y1="-98" x2="0" y2="-108" stroke="#fff" stroke-width="5" transform="rotate(${i * 30})"/>`).join('') + '<line class="hm" x1="0" y1="0" x2="0" y2="-64" stroke="#fff" stroke-width="9" stroke-linecap="round"/><line class="hh" x1="0" y1="0" x2="0" y2="-88" stroke="#FFD200" stroke-width="6" stroke-linecap="round"/><circle r="9" fill="#FFD200"/></svg>';
-  const hp = bigEmoji(el, '🎧', 200, 1200, 140); const kb = bigEmoji(el, '⌨️', 880, 1200, 130); const hg = bigEmoji(el, '⏳', 540, 1200, 150);
-  const phone = mk('div', '', el, '', { position: 'absolute', left: '380px', top: '1110px', width: '320px', height: '470px', borderRadius: '48px', background: '#0c0d10', border: '6px solid #2b2e35', boxShadow: '0 30px 80px rgba(0,0,0,.7)' });
-  phone.innerHTML = '<svg width="308" height="458" viewBox="0 0 308 458"><circle cx="154" cy="190" r="86" fill="none" stroke="#2b2e35" stroke-width="22"/><circle class="ring" cx="154" cy="190" r="86" fill="none" stroke="#FFD200" stroke-width="22" stroke-linecap="round" stroke-dasharray="540" stroke-dashoffset="475" transform="rotate(-90 154 190)"/><rect x="54" y="340" width="200" height="60" rx="30" fill="#2b2e35"/><text x="154" y="120" fill="#ff5a70" font-size="60" text-anchor="middle" font-family="Noto Color Emoji">⚠️</text></svg>';
-  return { sky, tl, rec, clock, hp, kb, hg, phone };
+  const rec = mk('div', '', el, '', { position: 'absolute', left: '190px', top: '560px', width: '700px', height: '700px' });
+  rec.innerHTML = ['top:0;left:0;border-width:10px 0 0 10px', 'top:0;right:0;border-width:10px 10px 0 0', 'bottom:0;left:0;border-width:0 0 10px 10px', 'bottom:0;right:0;border-width:0 10px 10px 0'].map(c => `<div style="position:absolute;width:120px;height:120px;border:solid #fff;${c}"></div>`).join('') +
+    '<div style="position:absolute;left:40px;top:40px;display:flex;align-items:center;gap:18px;font-size:60px;font-weight:900;direction:ltr"><span class="dot" style="width:40px;height:40px;border-radius:50%;background:#ff2d55"></span>REC</div>' +
+    '<div class="tc" style="position:absolute;left:0;right:0;top:300px;text-align:center;font-size:120px;font-weight:900;direction:ltr;font-variant-numeric:tabular-nums">00:00:00</div>';
+  const tl = makeTimeline(el, 980, 560, { left: '50px', top: '640px' });
+  const clock = mk('div', '', el, '', { position: 'absolute', left: '240px', top: '560px', width: '600px', height: '600px' });
+  clock.innerHTML = '<svg width="600" height="600" viewBox="-125 -125 250 250"><circle r="118" fill="#101216" stroke="#FFD200" stroke-width="6"/>' + Array.from({ length: 12 }, (_, i) => `<line x1="0" y1="-98" x2="0" y2="-108" stroke="#fff" stroke-width="4" transform="rotate(${i * 30})"/>`).join('') + '<line class="hm" x1="0" y1="0" x2="0" y2="-74" stroke="#fff" stroke-width="7" stroke-linecap="round"/><line class="hh" x1="0" y1="0" x2="0" y2="-52" stroke="#FFD200" stroke-width="9" stroke-linecap="round"/><circle r="8" fill="#FFD200"/></svg>';
+  const phone = mk('div', '', el, '', { position: 'absolute', left: '320px', top: '520px', width: '440px', height: '720px', borderRadius: '64px', background: '#0c0d10', border: '8px solid #2b2e35', boxShadow: '0 30px 80px rgba(0,0,0,.7)' });
+  phone.innerHTML = '<svg width="424" height="704" viewBox="0 0 424 704"><circle cx="212" cy="300" r="120" fill="none" stroke="#2b2e35" stroke-width="28"/><circle class="ring" cx="212" cy="300" r="120" fill="none" stroke="#FFD200" stroke-width="28" stroke-linecap="round" stroke-dasharray="754" stroke-dashoffset="660" transform="rotate(-90 212 300)"/><rect x="72" y="520" width="280" height="80" rx="40" fill="#2b2e35"/><text x="212" y="330" fill="#ff5a70" font-size="110" text-anchor="middle" font-family="Noto Color Emoji">⚠️</text></svg>';
+  return { sky, rec, tl, clock, phone };
 }, (t, s) => {
-  const { sky, tl, rec, clock, hp, kb, hg, phone } = s.st;
-  // sky (day -> night)
+  const { sky, rec, tl, clock, phone } = s.st;
+  // time passes: sky goes from dusk to night (no objects, just mood)
   const c = sky.getContext('2d'), k = clamp((t - 6) / 8.4);
   const g = c.createLinearGradient(0, 0, 0, 960);
   const mix = (a, b) => a.map((v, i) => Math.round(lerp(v, b[i], k)));
-  const top = mix([70, 46, 16], [8, 10, 32]), bot = mix([20, 16, 12], [9, 10, 12]);
-  g.addColorStop(0, `rgb(${top})`); g.addColorStop(1, `rgb(${bot})`); c.fillStyle = g; c.fillRect(0, 0, 540, 960);
+  g.addColorStop(0, `rgb(${mix([64, 42, 14], [8, 10, 30])})`); g.addColorStop(1, `rgb(${mix([18, 14, 10], [9, 10, 12])})`);
+  c.fillStyle = g; c.fillRect(0, 0, 540, 960);
   const r = rnd(7); c.fillStyle = '#fff';
-  for (let i = 0; i < 70; i++) { const x = r() * 540, y = r() * 420, a = k * (0.4 + 0.6 * Math.abs(Math.sin(t * 2 + i))); c.globalAlpha = a; c.fillRect(x, y, 2, 2); }
+  for (let i = 0; i < 50; i++) { const x = r() * 540, y = r() * 960; c.globalAlpha = k * 0.7 * (0.5 + 0.5 * Math.sin(t * 2 + i)); c.fillRect(x, y, 2, 2); }
   c.globalAlpha = 1;
-  const ang = -0.2 + k * 3.3, cx = 270 + Math.cos(ang) * 220, cy = 240 - Math.sin(ang) * 210;
-  c.beginPath(); c.arc(cx, cy, 34, 0, 7); c.fillStyle = k < 0.55 ? '#ffb02e' : '#e8eefc'; c.shadowColor = k < 0.55 ? '#ffb02e' : '#aac'; c.shadowBlur = 40; c.fill(); c.shadowBlur = 0;
-  // clock spins faster and faster
-  const hrs = (t - 6) * (60 + (t - 6) * 14);
+  // beat 1: REC
+  const v1 = beat(t, T(2) - 0.15, T(3) - 0.05); show(rec, v1);
+  rec.querySelector('.dot').style.opacity = Math.sin(t * 10) > 0 ? 1 : 0.2;
+  const sec = Math.floor(Math.max(0, t - T(2)) * 40); rec.querySelector('.tc').textContent = `00:${String(Math.floor(sec / 60) % 60).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+  rec.style.transform = `scale(${0.9 + 0.1 * eo3(prog(t, T(2) - 0.15, 0.5))})`;
+  // beat 2-4: ONE timeline, silences -> repeats -> captions (keeps the same hero)
+  const v2 = beat(t, T(3) - 0.05, T(6) - 0.1);
+  tl.draw({ cuts: prog(t, T(3) + 0.1, 1.9), razor: (t > T(3) + 0.1 && t < T(3) + 2.0) ? prog(t, T(3) + 0.1, 1.9) : -1, flagS: prog(t, T(3) + 0.5, .5), sil: prog(t, T(3) + 1.5, 1.4), flagR: prog(t, T(4), .4), rep: prog(t, T(4) + 0.5, 1.0), caps: prog(t, T(5), 3.0) * 0.9, pulse: t, play: -1 });
+  tl.cv.style.opacity = v2; tl.cv.style.display = v2 <= 0.001 ? 'none' : 'block';
+  tl.cv.style.transform = `scale(${0.96 + 0.06 * prog(t, T(3), T(6) - T(3))})`;
+  // beat 5: giant clock
+  const v5 = beat(t, T(6) - 0.05, T(7) - 0.05); show(clock, v5);
+  const hrs = (t - T(6)) * 500 + 40;
   clock.querySelector('.hm').setAttribute('transform', `rotate(${hrs * 12})`); clock.querySelector('.hh').setAttribute('transform', `rotate(${hrs})`);
-  show(clock, prog(t, 6.6, .4));
-  // rec
-  const ro = (1 - prog(t, 7.3, .3)) * prog(t, 6.1, .2); show(rec, ro); rec.querySelector('.dot').style.opacity = Math.sin(t * 10) > 0 ? 1 : 0.2;
-  // timeline story
-  const tlIn = eo3(prog(t, T(2) - 0.1, .5)); tl.cv.style.opacity = tlIn; tl.cv.style.transform = `translateY(${(1 - tlIn) * 120}px)`;
-  const st = { cuts: prog(t, T(3) + 0.1, 1.9), razor: (t > T(3) + 0.1 && t < T(3) + 2.0) ? prog(t, T(3) + 0.1, 1.9) : -1, flagS: prog(t, T(3) + 0.6, .5), sil: prog(t, T(3) + 1.3, 1.6) * 0.7, flagR: prog(t, T(4), .4), rep: prog(t, T(4) + 0.5, 1.0), caps: prog(t, T(5), 3.2) * 0.9, pulse: t, play: t < T(3) + 2.2 ? prog(t, T(2), 3.2) : -1 };
-  tl.draw(st);
-  show(hp, prog(t, T(3) - 0.05, .3) * (1 - prog(t, T(4), .3))); setXf(hp, 0, Math.sin(t * 6) * 8);
-  show(kb, prog(t, T(5) - 0.05, .3) * (1 - prog(t, T(6) - 0.2, .3))); setXf(kb, 0, Math.abs(Math.sin(t * 13)) * -12);
-  show(hg, prog(t, T(6) - 0.1, .3) * (1 - prog(t, T(7) - 0.05, .3))); setXf(hg, 0, 0, 1, (t * 180) % 360 > 180 ? 180 : 0);
-  const po = eo3(prog(t, T(7) - 0.05, .5)); show(phone, po); phone.style.transform = `translateY(${(1 - po) * 260}px) rotate(${Math.sin(t * 20) * 1.2 * po}deg)`;
-  phone.querySelector('.ring').setAttribute('stroke-dashoffset', 475 - 20 * Math.sin(t * 3));
-  tl.cv.style.filter = `saturate(${1 - 0.5 * prog(t, T(6), 1)})`;
+  clock.style.transform = `scale(${0.85 + 0.15 * eo3(prog(t, T(6) - 0.05, 0.5))})`;
+  // beat 6: stuck export
+  const v6 = prog(t, T(7) - 0.05, 0.3); show(phone, v6);
+  phone.style.transform = `scale(${0.9 + 0.1 * eoB(prog(t, T(7) - 0.05, 0.5))}) rotate(${Math.sin(t * 20) * 1.0 * v6}deg)`;
+  phone.querySelector('.ring').setAttribute('stroke-dashoffset', 660 - 18 * Math.sin(t * 3));
 });
 
-// ================= S3  SOLUTION : AI wakes up, the mess is cleaned =================
+// ================= S3  SOLUTION : orb -> duck -> Pr + duck -> the wand cleans the timeline (one hero at a time) =================
 scene(14.4, 20.2, el => {
   const net = mk('canvas', '', el, null, { position: 'absolute', left: '0', top: '0', width: '1080px', height: '1200px' }); net.width = 1080; net.height = 1200;
   const glow = mk('div', '', el, '', { position: 'absolute', left: '240px', top: '210px', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(255,210,0,.5),transparent 65%)' });
-  const ai = mk('div', '', el, '', { display: 'none' });
   const duck = mk('img', '', el, null, { position: 'absolute', left: '320px', top: '290px', width: '440px', height: '440px', objectFit: 'contain' }); setImg(duck, 'assets/custom_duck.png');
   const ring1 = mk('div', '', el, '', { position: 'absolute', left: '280px', top: '250px', width: '520px', height: '520px', borderRadius: '50%', border: '8px solid #FFD200' });
   const name = mk('div', 'txt', el, 'Happy Duck AI', { top: '790px', fontSize: '116px', direction: 'ltr' });
-  const row = mk('div', '', el, '', { position: 'absolute', left: '0', top: '950px', width: '1080px', height: '130px' });
-  const pr = mk('div', '', row, 'Pr', { position: 'absolute', left: '300px', top: '0', width: '130px', height: '130px', borderRadius: '30px', background: '#2c1f6b', border: '6px solid #9999ff', color: '#b3b3ff', fontSize: '80px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', direction: 'ltr' });
-  const plus = mk('div', '', row, '+', { position: 'absolute', left: '470px', top: '0', width: '140px', textAlign: 'center', fontSize: '110px', fontWeight: '900', color: '#FFD200', lineHeight: '1.1' });
-  const duck2 = mk('img', '', row, null, { position: 'absolute', left: '650px', top: '0', width: '130px', height: '130px', objectFit: 'contain' }); setImg(duck2, 'assets/custom_duck.png');
-  const tl = makeTimeline(el, 980, 560, { left: '50px', top: '1080px', transformOrigin: '50% 0' });
-  const wand = bigEmoji(el, '🪄', 0, 0, 150);
-  return { net, glow, ai, duck, ring1, name, row, pr, plus, duck2, tl, wand };
+  const row = mk('div', '', el, '', { position: 'absolute', left: '0', top: '640px', width: '1080px', height: '300px' });
+  const pr = mk('div', '', row, 'Pr', { position: 'absolute', left: '110px', top: '20px', width: '260px', height: '260px', borderRadius: '60px', background: '#2c1f6b', border: '10px solid #9999ff', color: '#b3b3ff', fontSize: '160px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', direction: 'ltr' });
+  const plus = mk('div', '', row, '+', { position: 'absolute', left: '400px', top: '20px', width: '280px', textAlign: 'center', fontSize: '200px', fontWeight: '900', color: '#FFD200', lineHeight: '1.3' });
+  const duck2 = mk('img', '', row, null, { position: 'absolute', left: '710px', top: '10px', width: '260px', height: '280px', objectFit: 'contain' }); setImg(duck2, 'assets/custom_duck.png');
+  const tl = makeTimeline(el, 980, 560, { left: '50px', top: '640px' });
+  const wand = bigEmoji(el, '🪄', 0, 0, 170);
+  return { net, glow, duck, ring1, name, row, pr, plus, duck2, tl, wand };
 }, (t, s) => {
-  const { net, glow, ai, duck, ring1, name, row, pr, plus, duck2, tl, wand } = s.st;
-  // 3D neural sphere + glass AI orb
+  const { net, glow, duck, ring1, name, row, pr, plus, duck2, tl, wand } = s.st;
   const c = net.getContext('2d'); c.clearRect(0, 0, 1080, 1200);
-  const on = prog(t, T(8) - 0.1, 0.5) * (1 - prog(t, T(9) - 0.1, 0.35));
+  const on = beat(t, T(8) - 0.1, T(9) - 0.0, 0.3);
   if (on > 0) drawAIOrb(c, t, on, prog(t, T(8) - 0.1, 0.7));
-  const ap = eoB(prog(t, T(8), .6)) * (1 - prog(t, T(9) - 0.1, .3)); show(ai, ap); ai.style.transform = `scale(${0.4 + 0.6 * eoB(prog(t, T(8), .6))})`;
-  const gp = eoB(prog(t, T(9) - 0.05, .6)); glow.style.opacity = clamp(gp); glow.style.transform = `scale(${0.5 + 0.6 * gp + 0.04 * Math.sin(t * 4)})`;
-  pop(duck, t, T(9) - 0.05, 0.6, 0); duck.style.transform += ` translateY(${Math.sin(t * 3) * 10}px)`;
+  // duck + name
+  const vd = beat(t, T(9) - 0.05, T(10) - 0.05, 0.3);
+  const gp = eoB(prog(t, T(9) - 0.05, 0.6)); glow.style.opacity = clamp(gp) * vd; glow.style.transform = `scale(${0.5 + 0.6 * gp})`; glow.style.display = vd <= 0.001 ? 'none' : 'block';
+  duck.style.opacity = vd; duck.style.display = vd <= 0.001 ? 'none' : 'block'; duck.style.transform = `scale(${0.6 + 0.4 * eoB(prog(t, T(9) - 0.05, 0.6))}) translateY(${Math.sin(t * 3) * 10}px)`;
   const rp = prog(t, T(9) - 0.05, 0.7); ring1.style.opacity = rp > 0 && rp < 1 ? 1 - rp : 0; ring1.style.transform = `scale(${1 + rp * 0.7})`;
-  pop(name, t, T(9) + 0.05, 0.5, 40);
-  show(row, 1); const pa = eoB(prog(t, T(10) - 0.05, .5));
-  pr.style.opacity = clamp(pa); pr.style.transform = `translateX(${(1 - pa) * -300}px) scale(${0.6 + 0.4 * pa})`;
-  const pb = eoB(prog(t, T(10) + 0.15, .5)); plus.style.opacity = clamp(pb); plus.style.transform = `scale(${pb})`;
-  const pc = eoB(prog(t, T(10) + 0.3, .5)); duck2.style.opacity = clamp(pc); duck2.style.transform = `translateX(${(1 - pc) * 300}px) scale(${0.6 + 0.4 * pc})`;
-  // messy timeline -> clean by the wand
-  const cln = prog(t, T(11) - 0.2, 1.4);
-  tl.draw({ cuts: 1, flagS: (1 - prog(t, T(11) + 0.2, .4)), flagR: (1 - prog(t, T(11) + 0.3, .4)), sil: prog(t, T(11) + 0.2, 1.1), rep: prog(t, T(11) + 0.3, 1.1), clean: cln, pulse: t, play: -1, caps: 0 });
-  const tin = eo3(prog(t, T(8) + 0.2, .5)); tl.cv.style.opacity = tin; tl.cv.style.transform = `translateY(${(1 - tin) * 100}px) scale(.92)`;
-  show(wand, prog(t, T(11) - 0.3, .3) * (1 - prog(t, T(11) + 1.3, .3)));
-  setXf(wand, 90 + eo3(cln) * 880, 1120 - Math.sin(cln * 3.14) * 60, 1, -25 + Math.sin(t * 20) * 10);
+  name.style.opacity = vd * prog(t, T(9) + 0.1, 0.3); name.style.display = vd <= 0.001 ? 'none' : 'block';
+  // Pr + duck
+  const vr = beat(t, T(10) - 0.05, T(11) - 0.1, 0.3); show(row, vr);
+  const pa = eoB(prog(t, T(10) - 0.05, .5)), pb = eoB(prog(t, T(10) + 0.2, .5)), pc = eoB(prog(t, T(10) + 0.35, .5));
+  pr.style.transform = `translateX(${(1 - pa) * -300}px) scale(${0.6 + 0.4 * pa})`; plus.style.transform = `scale(${pb})`; duck2.style.transform = `translateX(${(1 - pc) * 300}px) scale(${0.6 + 0.4 * pc})`;
+  // the wand cleans the messy timeline
+  const vt = beat(t, T(11) - 0.15, 20.3, 0.3), cln = prog(t, T(11) + 0.35, 1.3);
+  tl.draw({ cuts: 1, flagS: 1 - prog(t, T(11) + 0.6, .4), flagR: 1 - prog(t, T(11) + 0.7, .4), sil: prog(t, T(11) + 0.6, 1.0), rep: prog(t, T(11) + 0.7, 1.0), clean: cln, pulse: t, play: -1, caps: 0 });
+  tl.cv.style.opacity = vt; tl.cv.style.display = vt <= 0.001 ? 'none' : 'block';
+  show(wand, prog(t, T(11) + 0.3, .25) * (1 - prog(t, T(11) + 1.7, .3)));
+  setXf(wand, 90 + eo3(cln) * 880, 620 - Math.sin(cln * 3.14) * 60, 1, -25 + Math.sin(t * 20) * 10);
 });
 
 // ================= S4  SMART CUT =================
@@ -302,12 +292,11 @@ scene(19.8, 42.0, el => {
   // cleaning timeline + before/after bars
   const tlc = makeTimeline(el, 980, 560, { left: '50px', top: '420px' });
   const bars = mk('div', '', el, '', { position: 'absolute', left: '90px', top: '1050px', width: '900px', height: '300px' });
-  bars.innerHTML = '<div style="position:absolute;left:0;top:20px;width:900px;height:70px;border-radius:35px;background:#3a3e46"></div><div class="b2" style="position:absolute;left:0;top:130px;width:900px;height:70px;border-radius:35px;background:linear-gradient(90deg,#FFD200,#ffa800);box-shadow:0 0 50px rgba(255,210,0,.4)"></div><div style="position:absolute;left:0;top:225px;font-size:90px">⏱️</div>';
-  const face = bigEmoji(el, '😮‍💨', 800, 1440, 130);
+  bars.innerHTML = '<div style="position:absolute;left:0;top:20px;width:900px;height:70px;border-radius:35px;background:#3a3e46"></div><div class="b2" style="position:absolute;left:0;top:130px;width:900px;height:70px;border-radius:35px;background:linear-gradient(90deg,#FFD200,#ffa800);box-shadow:0 0 50px rgba(255,210,0,.4)"></div>';
   // markers vs real cuts
   const mA = makeTimeline(el, 980, 330, { left: '50px', top: '470px' }), mB = makeTimeline(el, 980, 330, { left: '50px', top: '940px' });
   const xA = bigEmoji(el, '❌', 540, 390, 150), vB = bigEmoji(el, '✅', 540, 880, 150);
-  return { zb, pan, imgs, r1, r2, r3, cur, rp, drag, seld, tls, cur2, dg, cutsA, cutsB, sci, okB, noA, tlc, bars, face, mA, mB, xA, vB };
+  return { zb, pan, imgs, r1, r2, r3, cur, rp, drag, seld, tls, cur2, dg, cutsA, cutsB, sci, okB, noA, tlc, bars, mA, mB, xA, vB };
 }, (t, s) => {
   const S = s.st, a = 19.8;
   const tSel0 = T(13) - 0.1, tSel1 = T(14) - 0.1;
@@ -360,7 +349,6 @@ scene(19.8, 42.0, el => {
   S.tlc.cv.style.transform = `translateY(${(1 - eo3(prog(t, tDiag1 + .05, 0.5))) * 120}px)`;
   show(S.bars, gOn);
   const ratio = (info.endX - info.lx) / (info.rx - info.lx - 12); S.bars.querySelector('.b2').style.width = (900 * clamp(ratio * 1.1, 0.35, 1)) + 'px';
-  show(S.face, prog(t, T(23) + 1.6, .3) * gOn); setXf(S.face, 0, Math.sin(t * 5) * 6);
   // markers vs real cuts
   const mOn = prog(t, tGfx1 + 0.05, 0.3);
   S.mA.draw({ cuts: 0, markers: prog(t, T(24) + 0.1, .5), flagS: 0, pulse: t, play: -1 });
@@ -383,8 +371,8 @@ scene(41.7, 54.7, el => {
   const cloud = bigEmoji(cl, '☁️', 540, 480, 420);
   const sp = mk('div', '', cl, '✨', { position: 'absolute', left: '420px', top: '400px', fontSize: '140px', textAlign: 'center', width: '240px' });
   const bars = Array.from({ length: 22 }, (_, i) => mk('div', '', cl, '', { position: 'absolute', left: (90 + i * 42) + 'px', width: '24px', borderRadius: '12px', background: '#8fc1ff' }));
+  const dots = Array.from({ length: 14 }, () => mk('div', '', cl, '', { position: 'absolute', width: '26px', height: '26px', borderRadius: '50%', background: '#FFD200', boxShadow: '0 0 30px #FFD200' }));
   const flyW = ['لسه', 'بتقص', 'السكتات', 'وبتكتب', 'الكابشن'].map((w, i) => mk('div', '', cl, w, { position: 'absolute', padding: '8px 30px', borderRadius: '20px', background: '#ff4fa3', color: '#fff', fontSize: '64px', fontWeight: '900', whiteSpace: 'nowrap', direction: 'rtl' }));
-  const tlm = makeTimeline(cl, 980, 560, { left: '50px', top: '1010px' });
   // karaoke phone
   const ph = mk('div', '', el, '', { position: 'absolute', left: '250px', top: '190px', width: '580px', height: '1000px', borderRadius: '70px', background: 'linear-gradient(180deg,#3b1d5a,#14071f)', border: '8px solid #2b2e35', boxShadow: '0 40px 120px rgba(0,0,0,.7),0 0 120px rgba(255,79,163,.25)', overflow: 'hidden' });
   ph.innerHTML = '<svg width="564" height="984" viewBox="0 0 564 984" style="position:absolute;left:0;top:0"><circle cx="282" cy="360" r="120" fill="#e9b48c"/><path d="M110 700 Q120 520 282 500 Q444 520 454 700 L454 984 L110 984Z" fill="#1b1b22"/><path d="M170 330 Q180 210 282 210 Q384 210 394 330 Q340 270 282 270 Q224 270 170 330Z" fill="#2a1a12"/></svg>';
@@ -400,7 +388,7 @@ scene(41.7, 54.7, el => {
   const ed = mk('div', '', el, '', { position: 'absolute', left: '90px', top: '520px', width: '900px', height: '620px', borderRadius: '40px', background: '#14161a', border: '4px solid #FFD200', boxShadow: '0 30px 100px rgba(0,0,0,.7)' });
   ed.innerHTML = '<div style="position:absolute;left:40px;right:40px;top:50px;height:80px;border-radius:16px;background:#22262d"></div><div class="rowm" style="position:absolute;left:40px;right:40px;top:170px;height:110px;border-radius:20px;background:#22262d;border:3px solid #ff5a70;display:flex;align-items:center;justify-content:center;direction:rtl;font-size:72px;font-weight:900"><span>كلمة</span>&nbsp;<span class="wd" style="border-bottom:8px wavy #ff5a70;padding:0 6px">الكابيشن</span></div><div style="position:absolute;left:40px;right:40px;top:320px;height:80px;border-radius:16px;background:#22262d"></div><div style="position:absolute;left:40px;right:40px;top:440px;height:80px;border-radius:16px;background:#22262d"></div>';
   const cur3 = cursorEl(ed); const rp3 = rippleSet(ed); const ok3 = bigEmoji(ed, '✅', 800, 100, 110);
-  return { zb, i6, i7, r1, r2, cur, rp, cl, cloud, sp, bars, flyW, tlm, ph, kwW, tlk, dial, mic, arcs, bub, ed, cur3, rp3, ok3 };
+  return { zb, i6, i7, r1, r2, cur, rp, cl, cloud, sp, bars, dots, flyW, ph, kwW, tlk, dial, mic, arcs, bub, ed, cur3, rp3, ok3 };
 }, (t, s) => {
   const S = s.st, a = 41.7;
   const tPan1 = T(28) + 0.45;
@@ -422,17 +410,20 @@ scene(41.7, 54.7, el => {
   S.cloud.style.transform = `translate(-50%,-50%) scale(${1 + 0.05 * Math.sin(t * 6)})`;
   S.sp.style.transform = `scale(${1 + 0.2 * Math.sin(t * 9)}) rotate(${t * 40}deg)`;
   S.bars.forEach((b, i) => {
-    const up = prog(t, t0 + 0.1 + i * 0.012, 0.9), h = 60 + 80 * Math.abs(Math.sin(t * 7 + i));
-    b.style.height = h + 'px'; b.style.top = lerp(1800 - h, 760, eo3(up)) + 'px'; b.style.opacity = (1 - up) * 0.95 + 0.0; b.style.transform = `scaleX(${1 - up * 0.7})`;
-    b.style.left = lerp(90 + i * 42, 540 - 10, eo3(up)) + 'px';
+    const h = 50 + 90 * Math.abs(Math.sin(t * 7 + i * 0.7));
+    b.style.height = h + 'px'; b.style.top = (1290 - h / 2) + 'px'; b.style.left = (90 + i * 42) + 'px'; b.style.opacity = 0.95; b.style.transform = 'none';
+  });
+  S.dots.forEach((d, i) => {
+    const st = t0 + 0.1 + i * 0.08, p = prog(t, st, 0.85), x0 = 90 + ((i * 7) % 22) * 42 + 12;
+    d.style.left = (lerp(x0, 540, eo3(p)) - 13) + 'px'; d.style.top = (lerp(1290, 560, eo3(p)) - Math.sin(p * 3.14) * 120 - 13) + 'px';
+    d.style.opacity = p > 0 && p < 1 ? 1 : 0;
   });
   S.flyW.forEach((w, i) => {
     const st = t0 + 0.75 + i * 0.22, p = eo3(prog(t, st, 0.7));
-    const tx = 800 - i * 190, ty = 1080;
+    const tx = [780, 540, 300, 660, 420][i], ty = i < 3 ? 1000 : 1150;
     w.style.left = lerp(540, tx, p) + 'px'; w.style.top = lerp(520, ty + 20, p) + 'px';
     w.style.opacity = clamp(prog(t, st, 0.15)); w.style.transform = `translate(-50%,-50%) scale(${0.6 + 0.4 * p}) rotate(${(1 - p) * 20}deg)`;
   });
-  S.tlm.draw({ cuts: 1, sil: 1, rep: 1, caps: prog(t, t0 + 1.0, 1.3), pulse: t, play: -1 });
   // karaoke phone + nested timeline
   const k0 = T(29) - 0.15, kOn = prog(t, k0, 0.4) * (1 - prog(t, T(31) - 0.1, 0.3));
   show(S.ph, kOn); S.ph.style.transform = `translateY(${(1 - eo3(prog(t, k0, .5))) * 200}px)`;
@@ -454,47 +445,47 @@ scene(41.7, 54.7, el => {
   pop(S.ok3, t, T(33) + 0.7, .4);
 });
 
-// ================= S6  CTA =================
+// ================= S6  CTA : browser (hero) -> bio link (hero) -> "AI works, you direct" (hero) =================
 scene(54.4, 65.3, el => {
-  const glow = mk('div', '', el, '', { position: 'absolute', left: '220px', top: '90px', width: '640px', height: '640px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(255,210,0,.45),transparent 65%)' });
-  const duck = mk('img', '', el, null, { position: 'absolute', left: '360px', top: '170px', width: '360px', height: '360px', objectFit: 'contain' }); setImg(duck, 'assets/custom_duck.png');
+  const glow = mk('div', '', el, '', { position: 'absolute', left: '280px', top: '100px', width: '520px', height: '520px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(255,210,0,.45),transparent 65%)' });
+  const duck = mk('img', '', el, null, { position: 'absolute', left: '380px', top: '200px', width: '320px', height: '320px', objectFit: 'contain' }); setImg(duck, 'assets/custom_duck.png');
   const confetti = mk('canvas', '', el, null, { position: 'absolute', left: '0', top: '0', width: '1080px', height: '1920px' }); confetti.width = 540; confetti.height = 960;
-  const br = mk('div', '', el, '', { position: 'absolute', left: '90px', top: '620px', width: '900px', height: '520px', borderRadius: '36px', background: '#14161a', border: '4px solid #2b2e35', boxShadow: '0 40px 120px rgba(0,0,0,.7)', overflow: 'hidden' });
+  const br = mk('div', '', el, '', { position: 'absolute', left: '90px', top: '660px', width: '900px', height: '520px', borderRadius: '36px', background: '#14161a', border: '4px solid #2b2e35', boxShadow: '0 40px 120px rgba(0,0,0,.7)', overflow: 'hidden' });
   br.innerHTML = '<div style="height:96px;background:#1c1f24;display:flex;align-items:center;padding:0 26px;gap:16px"><span style="width:22px;height:22px;border-radius:50%;background:#ff5f57"></span><span style="width:22px;height:22px;border-radius:50%;background:#febc2e"></span><span style="width:22px;height:22px;border-radius:50%;background:#28c840"></span><div style="flex:1;margin-left:16px;height:56px;border-radius:28px;background:#0d0e11;border:2px solid #FFD200;display:flex;align-items:center;padding:0 26px;font-size:40px;font-weight:800;direction:ltr;color:#fff"><span class="ty"></span><span class="cr" style="width:4px;height:36px;background:#FFD200;margin-left:4px"></span></div></div>' +
     '<div style="position:absolute;left:0;right:0;top:130px;text-align:center"><img src="assets/custom_duck.png" style="width:150px;height:150px;object-fit:contain"></div>' +
     '<div class="btn" style="position:absolute;left:150px;right:150px;top:330px;height:120px;border-radius:60px;background:linear-gradient(90deg,#FFD200,#ffa800);display:flex;align-items:center;justify-content:center;gap:22px;font-size:66px;font-weight:900;color:#111;box-shadow:0 0 70px rgba(255,210,0,.5)"><span>⬇️</span><span>🎁</span></div>';
   const cur = cursorEl(el); const rp = rippleSet(el);
-  const bio = mk('div', '', el, '', { position: 'absolute', left: '0', top: '1200px', width: '1080px', height: '220px' });
-  bio.innerHTML = '<div style="position:absolute;left:290px;top:60px;width:500px;height:110px;border-radius:55px;background:#FFD200;color:#111;display:flex;align-items:center;justify-content:center;gap:16px;font-size:60px;font-weight:900;direction:ltr">🔗 <span>Bio</span></div>';
-  const arrow = bigEmoji(el, '👆', 540, 1400, 120);
-  const tl = makeTimeline(el, 980, 560, { left: '50px', top: '1130px', transform: 'scale(.62)', transformOrigin: '50% 0' });
-  const boss = bigEmoji(el, '🎬', 300, 1010, 200); const cup = bigEmoji(el, '☕', 780, 1010, 200); const crown = bigEmoji(el, '👑', 780, 890, 120);
+  const bio = mk('div', '', el, '<span style="font-size:130px">🔗</span><span>Bio</span>', { position: 'absolute', left: '240px', top: '760px', width: '600px', height: '240px', borderRadius: '120px', background: '#FFD200', color: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '28px', fontSize: '130px', fontWeight: '900', direction: 'ltr', boxShadow: '0 0 90px rgba(255,210,0,.5)' });
+  const arrow = bigEmoji(el, '👆', 540, 1120, 170);
+  const tl = makeTimeline(el, 980, 560, { left: '50px', top: '560px' });
+  const boss = bigEmoji(el, '🎬', 300, 1290, 200); const cup = bigEmoji(el, '☕', 780, 1290, 200); const crown = bigEmoji(el, '👑', 780, 1170, 120);
   return { glow, duck, confetti, br, cur, rp, bio, arrow, tl, boss, cup, crown };
 }, (t, s) => {
   const S = s.st;
-  const g = eoB(prog(t, 54.6, 0.6)); S.glow.style.opacity = clamp(g); S.glow.style.transform = `scale(${0.7 + 0.3 * g + 0.04 * Math.sin(t * 4)})`;
-  pop(S.duck, t, 54.6, 0.6, 0); S.duck.style.transform += ` translateY(${Math.sin(t * 3) * 10}px)`;
-  // confetti burst at T(34)
-  const c = S.confetti.getContext('2d'); c.clearRect(0, 0, 540, 960); const cp = prog(t, T(34) - 0.1, 2.2);
-  if (cp > 0 && cp < 1) { const r = rnd(5); for (let i = 0; i < 60; i++) { const a = r() * 6.283, v = 120 + r() * 300, x = 270 + Math.cos(a) * v * cp, y = 130 + Math.sin(a) * v * cp + 260 * cp * cp; c.fillStyle = ['#FFD200', '#ff4fa3', '#00c2ff', '#7cf29c'][i % 4]; c.globalAlpha = 1 - cp; c.fillRect(x, y, 8, 14); } c.globalAlpha = 1; }
-  // browser typing + download click
-  const bo = eo3(prog(t, T(34) - 0.05, 0.5)); show(S.br, bo * (1 - prog(t, T(37) - 0.15, .3))); S.br.style.transform = `translateY(${(1 - bo) * 200}px)`;
-  const url = 'happyduckai.com', n = Math.floor(clamp((t - (T(34) + 0.6)) / 1.6) * url.length);
+  const vtop = 1 - prog(t, T(37) - 0.2, 0.3);
+  const g = eoB(prog(t, 54.6, 0.6)); S.glow.style.opacity = clamp(g) * vtop; S.glow.style.transform = `scale(${0.7 + 0.3 * g})`;
+  pop(S.duck, t, 54.6, 0.6, 0); S.duck.style.transform += ` translateY(${Math.sin(t * 3) * 10}px)`; S.duck.style.opacity *= vtop;
+  const c = S.confetti.getContext('2d'); c.clearRect(0, 0, 540, 960); const cp = prog(t, T(34) - 0.1, 2.0);
+  if (cp > 0 && cp < 1) { const r = rnd(5); for (let i = 0; i < 50; i++) { const a = r() * 6.283, v = 120 + r() * 300, x = 270 + Math.cos(a) * v * cp, y = 130 + Math.sin(a) * v * cp + 260 * cp * cp; c.fillStyle = ['#FFD200', '#ff4fa3', '#00c2ff', '#7cf29c'][i % 4]; c.globalAlpha = 1 - cp; c.fillRect(x, y, 8, 14); } c.globalAlpha = 1; }
+  // beat A: browser + download
+  const vb = beat(t, T(34) - 0.05, T(35) - 0.05, 0.3); show(S.br, vb);
+  S.br.style.transform = `translateY(${(1 - eo3(prog(t, T(34) - 0.05, 0.5))) * 160}px)`;
+  const url = 'happyduckai.com', n = Math.floor(clamp((t - (T(34) + 0.5)) / 1.4) * url.length);
   S.br.querySelector('.ty').textContent = url.slice(0, n); S.br.querySelector('.cr').style.opacity = Math.sin(t * 12) > 0 ? 1 : 0;
-  const clickT = T(36) + 0.6; moveCursor(S.cur, t, clickT, 540, 620 + 390, 300, 300);
-  const press = t > clickT && t < clickT + 0.2 ? 0.94 : 1; S.br.querySelector('.btn').style.transform = `scale(${press})`;
-  doRipple(S.rp, t, clickT, 540, 1010);
-  const bi = eoB(prog(t, T(35) - 0.05, 0.5)); show(S.bio, bi * (1 - prog(t, T(37) - 0.15, .3))); S.bio.style.transform = `scale(${0.7 + 0.3 * bi})`;
-  show(S.arrow, prog(t, T(35) + 0.2, .3) * (1 - prog(t, T(37) - 0.15, .3))); setXf(S.arrow, 0, Math.sin(t * 8) * 18);
-  // final: the AI works, you direct
-  const fin = eo3(prog(t, T(37) - 0.1, 0.5));
-  S.tl.draw({ cuts: 1, flagS: 0, flagR: 0, sil: (t * 0.35) % 1.4, rep: (t * 0.35) % 1.4 - 0.2, caps: 1, pulse: t, play: (t * 0.25) % 1, clean: (t * 0.35) % 1.4 - 0.2 });
-  S.tl.cv.style.opacity = fin; S.tl.cv.style.display = fin <= 0.001 ? 'none' : 'block';
+  const clickT = T(35) - 0.45; moveCursor(S.cur, t, clickT, 540, 660 + 390, 300, 300); S.cur.style.opacity *= vb > 0 ? 1 : 0;
+  S.br.querySelector('.btn').style.transform = `scale(${t > clickT && t < clickT + 0.2 ? 0.94 : 1})`;
+  doRipple(S.rp, t, clickT, 540, 1050);
+  // beat B: bio link
+  const vl = beat(t, T(35) - 0.0, T(37) - 0.2, 0.3); show(S.bio, vl); S.bio.style.transform = `scale(${0.7 + 0.3 * eoB(prog(t, T(35), 0.5))})`;
+  show(S.arrow, vl * prog(t, T(35) + 0.3, .3)); setXf(S.arrow, 0, Math.sin(t * 8) * 18);
+  // beat C: AI works, you direct
+  const vf = prog(t, T(37) - 0.1, 0.4);
+  S.tl.draw({ cuts: 1, sil: (t * 0.35) % 1.4, rep: (t * 0.35) % 1.4 - 0.2, caps: 1, pulse: t, play: (t * 0.25) % 1, clean: (t * 0.35) % 1.4 - 0.2 });
+  S.tl.cv.style.opacity = vf; S.tl.cv.style.display = vf <= 0.001 ? 'none' : 'block';
   pop(S.boss, t, T(37) + 0.3, .5); S.boss.style.transform += ' translate(-50%,-50%)';
   pop(S.cup, t, T(38) - 0.2, .5); S.cup.style.transform += ' translate(-50%,-50%)';
   pop(S.crown, t, T(38) + 0.5, .5); S.crown.style.transform += ` translate(-50%,-50%) translateY(${Math.sin(t * 5) * 8}px)`;
 });
-
 // ---------- header (logo) ----------
 const head = mk('div', '', stage, '', { position: 'absolute', left: '0', top: '34px', width: '1080px', height: '90px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', direction: 'ltr' });
 const hl = mk('img', '', head, null, { width: '84px', height: '84px', objectFit: 'contain' }); setImg(hl, 'assets/custom_duck.png');
@@ -568,7 +559,7 @@ window.setT = async function (t) {
   // wipe at scene boundaries
   let wo = 0, wx = -400;
   BOUNDS.forEach(b => { const p = prog(t, b - 0.05, 0.42); if (p > 0 && p < 1) { wo = Math.sin(p * Math.PI); wx = -420 + p * 1600; } });
-  wipe.style.opacity = wo * 0.85; wipe.style.left = wx + 'px';
+  wipe.style.opacity = 0; wipe.style.left = wx + 'px';
   drawCaps(t);
   await Promise.all(pending);
   await document.fonts.ready;

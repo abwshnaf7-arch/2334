@@ -71,7 +71,7 @@ window.setT = async function (t) {
   // wipe at scene boundaries
   let wo = 0, wx = -400;
   BOUNDS.forEach(b => { const p = prog(t, b - 0.05, 0.42); if (p > 0 && p < 1) { wo = Math.sin(p * Math.PI); wx = -420 + p * 1600; } });
-  wipe.style.opacity = wo * 0.85; wipe.style.left = wx + 'px';
+  wipe.style.opacity = 0; wipe.style.left = wx + 'px';
   drawCaps(t);
   await Promise.all(pending);
   await document.fonts.ready;
