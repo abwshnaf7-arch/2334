@@ -2,7 +2,6 @@
    window.renderFrame(t) draws one frame; driver.js screenshots it frame by frame. */
 const NS = 'http://www.w3.org/2000/svg';
 const DURATION = 29.63;
-const BRAND = 'Y&amp;V';                       // brand text as heard in the voice-over
 const Y = '#FFD21F', Yd = '#F5A800', Yl = '#FFE97A', Yp = '#FFF1B8', K = '#151515', K2 = '#2B2B2B', W = '#FFFFFF', GR = '#E6DFC4';
 
 /* ---------- helpers ---------- */
@@ -101,7 +100,7 @@ function initScenes() {
     const glow = mk(c, `<circle r="260" fill="${Yl}" opacity=".55"/>`);
     const r1 = mk(c, `<circle r="335" fill="none" stroke="${K}" stroke-opacity=".4" stroke-width="6" stroke-dasharray="2 24" stroke-linecap="round"/>`);
     const r2 = mk(c, `<circle r="288" fill="none" stroke="${Yd}" stroke-width="7" stroke-dasharray="70 34 12 34" stroke-linecap="round"/>`);
-    const badge = mk(c, `<circle r="218" fill="${K}"/><circle r="192" fill="none" stroke="${Y}" stroke-width="8"/><text y="55" text-anchor="middle" font-size="156" fill="${Y}" direction="ltr">${BRAND}</text><path d="M-152 -72 A172 172 0 0 1 -44 -166" stroke="#fff" stroke-opacity=".3" stroke-width="15" fill="none" stroke-linecap="round"/>`);
+    const badge = mk(c, `<circle r="222" fill="${K}"/><circle r="206" fill="#FFF6CC"/><circle r="190" fill="none" stroke="${Y}" stroke-width="8"/><image href="assets/logo.png" x="-190" y="-215" width="380" height="438"/>`);
     const flash = mk(c, `<circle r="218" fill="none" stroke="${K}" stroke-width="14"/>`);
     const hb = mk(c, heart(Y, K, 12));
     const hearts = Array.from({ length: 9 }, (_, i) => ({ g: mk(c, heart(i % 2 ? Y : K, K, 0)), i }));
@@ -347,7 +346,7 @@ function initScenes() {
     const c = mk(ill, '');
     const glow = mk(c, `<circle r="262" fill="${Yl}" opacity=".6"/>`);
     const orbit = mk(c, `<circle r="330" fill="none" stroke="${K}" stroke-opacity=".4" stroke-width="6" stroke-dasharray="2 24" stroke-linecap="round"/>`);
-    const badge = mk(c, `<circle r="220" fill="${K}"/><circle r="194" fill="none" stroke="${Y}" stroke-width="8"/><text y="56" text-anchor="middle" font-size="160" fill="${Y}" direction="ltr">${BRAND}</text><path d="M-154 -72 A174 174 0 0 1 -44 -168" stroke="#fff" stroke-opacity=".3" stroke-width="15" fill="none" stroke-linecap="round"/>`);
+    const badge = mk(c, `<circle r="222" fill="${K}"/><circle r="206" fill="#FFF6CC"/><circle r="190" fill="none" stroke="${Y}" stroke-width="8"/><image href="assets/logo.png" x="-190" y="-215" width="380" height="438"/>`);
     const hs = [[-250, -230, .34], [270, -260, .44], [300, 250, .3], [-290, 260, .4]].map(([x, y, s], i) => ({ g: mk(c, heart(i % 2 ? K : Y, K, i % 2 ? 0 : 9)), x, y, s }));
     const sts = Array.from({ length: 6 }, (_, i) => mk(c, star5(i % 2 ? K : Yd, 30)));
     return (lt, t) => {
@@ -415,6 +414,7 @@ window.renderFrame = renderFrame;
 window.DURATION = DURATION;
 window.ready = (async () => {
   try { await Promise.all([document.fonts.load('900 60px Cairo', 'شكراً'), document.fonts.load('900 60px Cairo', 'Y&V')]); await document.fonts.ready; } catch (e) { }
+  try { const im = new Image(); im.src = 'assets/logo.png'; await im.decode(); } catch (e) { }
   initBg(); initScenes(); initTrans(); renderFrame(0);
   return true;
 })();
