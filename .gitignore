@@ -2,3 +2,7 @@ work/
 reel/build/*.wav
 __pycache__/
 *.whl
+reel/clips/
+reel/assets/
+reel/frames/
+reel/out/
