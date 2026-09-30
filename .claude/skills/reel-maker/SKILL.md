@@ -16,7 +16,7 @@ Reply to the owner in short Egyptian Arabic, no jargon. The owner is not technic
 | "كمل" (after Gemini finished) | `git -C /home/user/assets-repo pull` (clone first if missing), read `comms/to-claude/*-reply.md`, verify assets by LOOKING at them, continue the build. |
 | Feedback with a screenshot | Fix that scene only (see scene rules), re-render only the affected frames, re-encode, send. |
 
-Files in this skill: `CHANNEL.md` (Claude<->Gemini facts/troubleshooting), `gemini/onboarding-message.md`, `gemini/asset-request-template.md`, `owner-guide-ar.md`, `brief-template.md`, `engine/` (the code).
+Files in this skill: `gemini/screenshot-method.md` (HOW Gemini captures UI screenshots: Chrome DevTools Protocol on the live Premiere panel, port 8889, 1040x1500 PNG, states forced by injected JS; any new capture must use the same method), `CHANNEL.md` (Claude<->Gemini facts/troubleshooting), `gemini/onboarding-message.md`, `gemini/asset-request-template.md`, `owner-guide-ar.md`, `brief-template.md`, `engine/` (the code).
 
 ## The two design rules the owner insisted on
 1. **Show, don't tell.** Every idea is a visual scene (motion graphics of the real timeline/UI, icons, metaphors, before/after). On-screen text = the karaoke caption + tiny labels only. A scene that reads like a slide gets redone.
