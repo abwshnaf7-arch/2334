@@ -20,9 +20,9 @@ const FPS=30;
       const buf=await pg.locator('canvas').screenshot({omitBackground:true});if(!fb.stdin.write(buf))await new Promise(r=>fb.stdin.once('drain',r));}
     fb.stdin.end();await new Promise(r=>fb.on('close',r));}
   if(!fs.existsSync('work/person.mov'))spawn.sync;
-  const z="1+if(between(t,6,11),0.0,0)";
+  const Z="if(lt(t,4),1+0.1*exp(-14*t)+0.015*t,1)";
   const ff=spawn(FF,['-y','-loglevel','error','-i',inp,'-i','work/back.mov','-i','work/person.mov','-f','image2pipe','-framerate',String(FPS),'-c:v','png','-i','-',
-    '-filter_complex',`[0:v][1:v]overlay=0:0:eof_action=pass[a];[a][2:v]overlay=0:0:eof_action=pass[b];[b][3:v]overlay=0:0:format=auto,format=yuv420p[o]`,
+    '-filter_complex',`[0:v]scale=w='trunc(1080*(${Z})/2)*2':h=-2:eval=frame,crop=1080:1920[v0];[2:v]scale=w='trunc(1080*(${Z})/2)*2':h=-2:eval=frame,crop=1080:1920[p0];[v0][1:v]overlay=0:0:eof_action=pass[a];[a][p0]overlay=0:0:eof_action=pass:format=auto[b];[b][3:v]overlay=0:0:format=auto,format=yuv420p[o]`,
     '-map','[o]','-map','0:a','-c:v','libx264','-crf','17','-preset','medium','-c:a','copy','-shortest',out],{stdio:['pipe','inherit','inherit']});
   for(let i=0;i<n;i++){
     await pg.evaluate(t=>window.renderFrame(t,'front'),i/FPS);

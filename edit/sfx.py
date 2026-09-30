@@ -73,30 +73,29 @@ def rumble(dur=5,g=1):
     t=np.linspace(0,1,n); return x*np.minimum(1,t*10)*np.minimum(1,(1-t)*10)*g
 
 WS=[4,6,11,14,17,22]
-# ---- scene 1: clock
-place(whoosh(.5,400,4000),0.0,.35)
-for k,tt in enumerate(np.linspace(.3,3.7,int(3.4*9))):   # ticks, accelerating feel via pitch
-    f=1400+ (tt/3.7)*1400
-    place(tick(f),tt,.16+.10*(tt/3.7))
-place(riser(3.2,180,1500),.4,.16)
-place(whoosh(.6,3000,300,up=False),3.5,.3)
+# ---- scene 1: HOOK
+place(boom(1.3,46),0.0,.9); place(hit(.4,90),0.0,.6); place(whoosh(.45,300,7000),0.0,.5)
+for k in range(6): place(click(rng.uniform(2500,6000),.03),0.02+k*.045,.35)   # glitch ticks
+for k,tt in enumerate(np.linspace(.4,2.9,60)):
+    f=1300+(tt/3.7)*1800; place(tick(f),tt,.14+.16*(tt/3.0)); 
+place(riser(2.6,120,3200),.35,.34)
+place(whoosh(.35,2500,400,up=False),2.7,.3)
+place(boom(1.6,44),2.95,1.0); place(hit(.4,110),2.95,.6); place(chime(1046,1.6),2.97,.3); place(whoosh(.3,600,6000),2.9,.4)
 # ---- cuts
 for i,c in enumerate(WS): 
-    place(whoosh(.55,400,6000),c-.35,.55); place(hit(.4,150),c,.45)
+    place(whoosh(.6,400,5000),c-.4,.32); place(hit(.4,150),c,.28)
 # ---- scene 2
 for k,tt in enumerate(np.linspace(4.15,5.1,14)): place(blip(500+k*70),tt,.14)
 place(click(2200),4.15,.35)
 place(riser(.45,300,2600),4.8,.3)
 place(boom(1.4,52),5.28,.75); place(chime(1568,1.4),5.3,.28); place(whoosh(.4,900,7000),5.2,.35)
-# ---- scene 3
-B=.83
-for i in range(6):
+# ---- scene 3 (calm: 4 beats)
+B=1.25
+for i in range(4):
     tt=6+i*B
-    place(whoosh(.35,500,5500),tt-.05,.35)
-    place(hit(.3,110+i*8),tt+.02,.45)
-    place(snip(),tt+.10,.55); place(snip(),tt+.42,.4)
-place(boom(.9,60),6.0,.3)
-place(riser(.8,400,3500),10.1,.28)
+    place(whoosh(.6,400,3500),tt-.1,.22); place(hit(.3,100),tt+.03,.3)
+    place(snip(),tt+.35,.4)
+place(boom(.9,60),6.0,.25); place(riser(.8,400,3000),10.1,.2)
 # ---- scene 4
 for k,tt in enumerate(np.linspace(11.45,12.0,5)): place(key(),tt+rng.uniform(0,.03),.55)
 place(click(2600),11.2,.45); place(pop(600),11.15,.2)
@@ -112,8 +111,8 @@ place(riser(.55,500,3500),15.85,.3)
 place(chime(2093,1.6),16.3,.4); place(sparkle(1.2),16.3,.5); place(hit(.4,120),16.3,.4)
 # ---- scene 6
 for k in range(17):
-    tt=17.05+ (k*.045)*2
-    place(pop(450+ (k%6)*90),tt,.28,pan=(-1)**k*.5)
+    tt=17.1+k*.075
+    place(pop(450+ (k%6)*90),tt,.2,pan=(-1)**k*.5)
 place(boom(1.2,50),17.32,.7); place(chime(1319,1.6),17.35,.35); place(sparkle(1.0),17.4,.45)
 place(rumble(4.6,1),17.3,.15)
 place(riser(.6,300,2500),21.4,.3)
