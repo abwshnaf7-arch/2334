@@ -13,12 +13,19 @@ const FPS=30;
     await pg.locator('canvas').screenshot({path:process.argv[4],omitBackground:true});await b.close();return;}
   const [inp,out]=[process.argv[2],process.argv[3]];
   const dur=29.37,n=Math.round(dur*FPS);
-  const z="1+if(between(t,6,11),0.05+0.13*lt(mod(t-6,0.5),0.22),0)+if(gte(t,22),0.03+0.02*sin(t*2),0)";
-  const ff=spawn(FF,['-y','-loglevel','error','-i',inp,'-f','image2pipe','-framerate',String(FPS),'-c:v','png','-i','-',
-    '-filter_complex',`[0:v]scale=w='trunc(1080*(${z})/2)*2':h=-2:eval=frame,crop=1080:1920[v];[v][1:v]overlay=0:0:format=auto,format=yuv420p[o]`,
+  // pass 1: clock layer behind the speaker (alpha)
+  if(!fs.existsSync('work/back.mov')){
+    const fb=spawn(FF,['-y','-loglevel','error','-f','image2pipe','-framerate',String(FPS),'-c:v','png','-i','-','-c:v','png','-pix_fmt','rgba','work/back.mov'],{stdio:['pipe','inherit','inherit']});
+    for(let i=0;i<126;i++){await pg.evaluate(t=>window.renderFrame(t,'back'),i/FPS);
+      const buf=await pg.locator('canvas').screenshot({omitBackground:true});if(!fb.stdin.write(buf))await new Promise(r=>fb.stdin.once('drain',r));}
+    fb.stdin.end();await new Promise(r=>fb.on('close',r));}
+  if(!fs.existsSync('work/person.mov'))spawn.sync;
+  const z="1+if(between(t,6,11),0.0,0)";
+  const ff=spawn(FF,['-y','-loglevel','error','-i',inp,'-i','work/back.mov','-i','work/person.mov','-f','image2pipe','-framerate',String(FPS),'-c:v','png','-i','-',
+    '-filter_complex',`[0:v][1:v]overlay=0:0:eof_action=pass[a];[a][2:v]overlay=0:0:eof_action=pass[b];[b][3:v]overlay=0:0:format=auto,format=yuv420p[o]`,
     '-map','[o]','-map','0:a','-c:v','libx264','-crf','17','-preset','medium','-c:a','copy','-shortest',out],{stdio:['pipe','inherit','inherit']});
   for(let i=0;i<n;i++){
-    await pg.evaluate(t=>window.renderFrame(t),i/FPS);
+    await pg.evaluate(t=>window.renderFrame(t,'front'),i/FPS);
     const buf=await pg.locator('canvas').screenshot({omitBackground:true});
     if(!ff.stdin.write(buf))await new Promise(r=>ff.stdin.once('drain',r));
     if(i%60==0)console.log('frame',i,'/',n);
