@@ -26,3 +26,7 @@ Why not one repo: Gemini's login is `sdfbs` which has no write access to `abwshn
 - Gemini's files in the wrong place / renamed: ask again with exact paths; Claude never guesses.
 - Anything pushed to a public repo is public (owner accepted this).
 - Never ask for, accept, or forward tokens.
+
+## Inbox polling (so the owner does not relay Claude's messages)
+- Claude -> Gemini: `comms/tools/wait_for_claude.js` (repo abwshnaf7-arch/2334, branch claude/bold-thompson-v8wyym) is a blocking inbox check Gemini runs in a loop (see `gemini/standing-prompt.md`; owner pastes that prompt ONCE). It returns as soon as a new `comms/to-gemini/NNN-*.md` appears. Tested locally by Claude (prints new messages, exit 2 on timeout). Works only while Gemini's session keeps running commands.
+- Gemini -> Claude: Claude cannot wake itself (scheduling denied). Options: (a) owner says "كمل"; (b) PROPOSED, needs the owner's explicit OK because it creates a PR: open a PR in abwshnaf7-arch/2334 and subscribe to it with `subscribe_pr_activity`; Gemini posts a comment on that PR (as `sdfbs`, via GitHub API using the token that Git Credential Manager already caches, never printed) when he finishes; the comment event wakes Claude. Not yet verified end to end.
