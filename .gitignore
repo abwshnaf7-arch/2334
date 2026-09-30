@@ -6,3 +6,5 @@ reel/clips/
 reel/assets/
 reel/frames/
 reel/out/
+reel/stills/
+reel/build/*.log
