@@ -89,18 +89,15 @@ for k,tt in enumerate(np.linspace(4.15,5.1,14)): place(blip(500+k*70),tt,.14)
 place(click(2200),4.15,.35)
 place(riser(.45,300,2600),4.8,.3)
 place(boom(1.4,52),5.28,.75); place(chime(1568,1.4),5.3,.28); place(whoosh(.4,900,7000),5.2,.35)
-# ---- scene 3: silence removal (6-8) then captions (8-11)
+# ---- scene 3: Cut & Clean (6-8) then caption (8-11)
 place(whoosh(.5,400,3500),5.6,.2)
-place(click(2400),6.6,.5); place(pop(520),6.62,.3); place(riser(.5,300,1500),6.6,.14)   # analyze click
-place(whoosh(.5,500,4000),6.95,.26)
-for k in range(4):                                                                        # snip each silence
-    tt=7.18+k*.07; place(snip(),tt,.42); 
-place(riser(.45,300,1800),7.4,.16); place(whoosh(.45,2500,500,up=False),7.45,.3)          # ripple close
-place(boom(.6,70),7.85,.35); place(chime(1568,.9),7.87,.22)                                 # Cut & Clean
+place(click(2400),6.72,.55); place(pop(520),6.74,.3); place(boom(.5,80),6.76,.25)          # click Cut & Clean
+for k in range(4): place(snip(),6.9+k*.1,.42)                                              # scissors on each silence
+place(riser(.7,300,1800),7.15,.16); place(whoosh(.7,2500,500,up=False),7.2,.3)           # ripple close
+place(chime(1568,.9),7.85,.22)
 place(whoosh(.5,500,4000),7.95,.28)
-place(click(2400),8.6,.55); place(pop(520),8.62,.3); place(chime(1319,.8),8.65,.18)         # Generate Caption
-place(whoosh(.45,500,4000),8.75,.26)
-for k in range(6): place(pop(600+k*70),8.85+k*.08,.24,pan=(-1)**k*.4)                       # speech->words
+place(click(2400),8.95,.55); place(pop(520),8.97,.3); place(chime(1319,.8),9.0,.18)        # Generate Caption
+place(whoosh(.45,500,4000),9.1,.24)
 place(whoosh(.5,400,3800),9.42,.26)
 for k in range(6):
     tt=9.5+.12+k*.17+.14

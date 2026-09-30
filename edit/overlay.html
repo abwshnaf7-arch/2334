@@ -190,7 +190,7 @@ function s2(t){
 }
 
 // ---------- S3 caption creation flow (6-11)
-const CT=[6,7.0,8.0,8.8,9.5,11];
+const CT=[6,8.0,9.5,11];
 const CAPW=['كابشن','تلقائي','بضغطة','زر','احترافي','وسريع'];
 function cursor(x,y,s=1){g.save();g.translate(x,y);g.scale(s,s);g.fillStyle=WH;g.strokeStyle=DK;g.lineWidth=5;g.beginPath();g.moveTo(0,0);g.lineTo(0,74);g.lineTo(20,56);g.lineTo(36,96);g.lineTo(52,88);g.lineTo(35,50);g.lineTo(62,48);g.closePath();g.fill();g.stroke();g.restore()}
 function heading(txtS,sub,p){g.save();g.globalAlpha=easeOut(p);g.translate(0,(1-easeOut(p))*-60);
@@ -201,22 +201,12 @@ function pluginCard(img,zoom,cx,cy,w=800){const h=w*1500/1040;g.save();g.transla
 function s3(t){
   const i=CT.findIndex((c,k)=>t>=c&&t<CT[k+1]);const l=t-CT[i],dur=CT[i+1]-CT[i];const b=l/dur;
   bg(t);
-  g.save();g.translate(W/2,H/2);const zi=1+(i===4?0:.03*b);g.scale(zi,zi);g.translate(-W/2,-H/2);
+  g.save();g.translate(W/2,H/2);const zi=1+(i===2?0:.03*b);g.scale(zi,zi);g.translate(-W/2,-H/2);
   const w=800,h=w*1500/1040,cy=1040;
-  if(i===0){ // silence removal: analyze
-    heading('إزالة السكتات','تحليل الصوت تلقائياً',prog(l,0,.35));
-    const pc=easeOut(prog(l,0,.4));
-    g.save();g.globalAlpha=pc;g.translate(0,(1-pc)*100);
-    pluginCard(pl[6],1,W/2,cy,w);
-    const swp=prog(l,.62,.8);if(swp>0){g.globalAlpha=swp*pc;g.save();g.translate(W/2,cy);g.save();rr(-w/2,-h/2,w,h,28);g.clip();g.drawImage(pl[2],-w/2,-h/2,w,h);g.restore();g.restore();g.globalAlpha=pc}
-    const bx=W/2-w/2+520*(w/1040),by=cy-h/2+778*(h/1500);
-    const cp=easeInOut(prog(l,.1,.55));if(l<.85)cursor(N(W-140,bx-10,cp),N(H-360,by-8,cp)+(l>.58?4:0),1.1);
-    const k=prog(l,.55,.8);if(k>0&&k<1){g.strokeStyle=Y;g.lineWidth=6;g.globalAlpha=1-k;g.beginPath();g.arc(bx,by,30+120*k,0,7);g.stroke()}
-    g.restore();
-  }else if(i===1){ // silence removal: gaps cut + ripple close
-    heading('بدون سكتات','',prog(l,0,.3));
+  if(i===0){ // silence removal: full Cut & Clean process
+    heading('إزالة السكتات','قص تلقائي بضغطة',prog(l,0,.3));
     const segs=[130,150,110,170,120],gaps=[60,55,75,45];
-    const col=clamp((l-.45)/.4),ce=easeInOut(col);
+    const col=clamp((l-1.2)/.7),ce=easeInOut(col);
     const tx0=50,rowsY=[860,1140];
     // before/after length bars
     const bw=920;rr(80,600,bw,26,13);g.fillStyle='#2a2410';g.fill();
@@ -235,23 +225,21 @@ function s3(t){
         if(k<gaps.length){const gw=gaps[k]*.96*(1-ce);
           if(gw>1){g.save();g.translate(x,ry-70);g.fillStyle='rgba(255,60,60,.35)';g.fillRect(0,0,gw,140);g.strokeStyle='#ff4d4d';g.lineWidth=3;g.setLineDash([10,8]);g.strokeRect(0,0,gw,140);g.setLineDash([]);g.restore()}
           // scissors snip on gap
-          const sn=prog(l,.18+k*.07,.32+k*.07);if(sn>0&&sn<1&&r===0){g.save();g.translate(x+gw/2,ry-150-40*(1-sn));g.rotate(Math.PI);scissors(0,0,.42,.05+.3*Math.abs(Math.sin(sn*Math.PI*3)));g.restore()}
+          const sn=prog(l,.85+k*.1,1.1+k*.1);if(sn>0&&sn<1&&r===0){g.save();g.translate(x+gw/2,ry-150-40*(1-sn));g.rotate(Math.PI);scissors(0,0,.42,.05+.3*Math.abs(Math.sin(sn*Math.PI*3)));g.restore()}
           x+=gw}}
     });
-    const bt=back(prog(l,.75,1.0));g.save();g.translate(W/2,1500);g.scale(bt,bt);rr(-330,-70,660,140,40);g.fillStyle=Y;g.shadowColor=Y;g.shadowBlur=50;g.fill();g.shadowBlur=0;txt('Cut & Clean',0,4,72,{fill:DK,rtl:false});g.restore();
-  }else if(i===2){ // caption: click generate
+    const bt=back(prog(l,0,.3));const pr=prog(l,.7,.85)-prog(l,.85,1.0);
+    g.save();g.translate(W/2,1500);g.scale(bt*(1-.07*pr),bt*(1-.07*pr));rr(-330,-70,660,140,40);g.fillStyle=Y;g.shadowColor=Y;g.shadowBlur=50+40*pr;g.fill();g.shadowBlur=0;txt('Cut & Clean',0,4,72,{fill:DK,rtl:false});g.restore();
+    const cq=prog(l,.85,1.2);if(cq>0&&cq<1){g.strokeStyle=WH;g.lineWidth=6;g.globalAlpha=1-cq;g.beginPath();g.arc(W/2+40,1500,40+140*cq,0,7);g.stroke();g.globalAlpha=1}
+    const ck=easeInOut(prog(l,.2,.7));cursor(N(W-140,W/2+40,ck),N(1250,1495,ck)+(l>.72?5:0),1.1);
+  }else if(i===1){ // caption: click generate
     heading('إنشاء الكابشن','بضغطة واحدة',prog(l,0,.3));
     const pc=easeOut(prog(l,0,.35));
     g.save();g.globalAlpha=pc;g.translate(0,(1-pc)*100);pluginCard(pl[4],1,W/2,cy,w);
     const bx=W/2-w/2+740*(w/1040),by=cy-h/2+1226*(h/1500);
-    const cp=easeInOut(prog(l,.1,.6));cursor(N(W-140,bx-10,cp),N(H-330,by-8,cp)+(l>.62?4:0),1.1);
-    const k=prog(l,.6,.95);if(k>0&&k<1){g.strokeStyle=Y;g.lineWidth=6;g.globalAlpha=1-k;g.beginPath();g.arc(bx,by,30+130*k,0,7);g.stroke()}
+    const cp=easeInOut(prog(l,.2,.9));cursor(N(W-140,bx-10,cp),N(H-330,by-8,cp)+(l>.92?4:0),1.1);
+    const k=prog(l,.95,1.3);if(k>0&&k<1){g.strokeStyle=Y;g.lineWidth=6;g.globalAlpha=1-k;g.beginPath();g.arc(bx,by,30+130*k,0,7);g.stroke()}
     g.restore();
-  }else if(i===3){ // caption: speech to text
-    heading('تحويل الكلام إلى نص','تلقائياً',prog(l,0,.3));
-    pluginCard(pl[3],1,W/2,cy,w);
-    for(let k=0;k<6;k++){const st=.05+k*.08,p=prog(l,st,st+.5);if(p<=0||p>=1)continue;const x=W/2+(k%2?1:-1)*(120+(k*67)%180),y=N(900,420,easeOut(p));
-      g.save();g.globalAlpha=Math.sin(p*Math.PI);g.translate(x,y);rr(-110,-46,220,92,24);g.fillStyle=k%2?Y:WH;g.shadowColor=Y;g.shadowBlur=30;g.fill();g.shadowBlur=0;txt(CAPW[k],0,4,52,{fill:DK});g.restore()}
   }else{ // caption clips land on the timeline
     heading('الكابشن على التايم لاين','كليب بعد كليب',prog(l,0,.3));
     const mx=W/2,my=728,mw=420,mh=747;
