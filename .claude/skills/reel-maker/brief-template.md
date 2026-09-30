@@ -1,0 +1,11 @@
+# Reel brief (fill before building)
+- Product + one-line promise:
+- Audience:
+- Format / length: 9:16, ~60s
+- Hook (Egyptian Arabic, 1-2 sentences, problem first):
+- Features to show (max 3), in order, each with: what the viewer DOES -> what they SEE as the result:
+- Claims allowed (only ones the owner can prove): ...   Claims forbidden: accuracy %, exact speed, "100%" ...
+- CTA (link, offer wording, e.g. "جرّبها مجاناً" WITHOUT a duration unless confirmed):
+- Brand: logo file, colors (#hex), fonts (Cairo for Arabic)
+- Assets available: real UI screenshots (list), screen recordings (list), raw footage before/after
+- Music mood:

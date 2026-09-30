@@ -8,3 +8,8 @@ reel/frames/
 reel/out/
 reel/stills/
 reel/build/*.log
+.claude/skills/reel-maker/engine/build/
+.claude/skills/reel-maker/engine/frames/
+.claude/skills/reel-maker/engine/out/
+.claude/skills/reel-maker/engine/clips/
+.claude/skills/reel-maker/engine/assets/
