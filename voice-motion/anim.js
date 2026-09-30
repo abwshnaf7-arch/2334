@@ -77,11 +77,11 @@ function banner(root, text) {
 /* ---------- scene factory ---------- */
 function scene(root, t0, t1, text, build) {
   const g = mk(root, ''); g.style.display = 'none';
-  const ban = banner(g, text);
-  const ill = mk(g, '');
+  const inner = mk(g, '');
+  const ban = banner(inner, text);
+  const ill = mk(inner, '');
   const upd = build(ill, g);
-  const ground = mk(ill, '');   // optional shared ground shadow drawn by build via ill
-  return { t0, t1, g, ban, upd, ill };
+  return { t0, t1, g, inner, ban, upd, ill };
 }
 const groundShadow = (parent, y, w = 320) => mk(parent, `<ellipse cx="0" cy="${y}" rx="${w}" ry="26" fill="${K}" opacity=".14"/>`);
 
@@ -189,11 +189,11 @@ function initScenes() {
       const c = popS(lt, .15, .6, E.back); T(card, { y: 0, s: c.s, o: c.o }); card.setAttribute('transform', `translate(0 100) scale(${c.s}) translate(0 -100)`);
       const fc = popS(lt, .35, .7, E.back2); T(face, { y: -150, s: fc.s * (1 + .03 * Math.sin(t * 4)), r: Math.sin(t * 2.2) * 4, o: fc.o });
       const sm = p(lt, .7, .6, E.back); $('#mouth', face).setAttribute('d', `M-52 24 Q0 ${24 + sm * 62} 52 24`);
-      const pulse = [3.4, 3.7, 3.98].reduce((a, s) => a + (lt > s ? Math.exp(-(lt - s) * 7) * Math.sin((lt - s) * 25) : 0), 0);
+      const pulse = [3.6, 3.9, 4.18].reduce((a, s) => a + (lt > s ? Math.exp(-(lt - s) * 7) * Math.sin((lt - s) * 25) : 0), 0);
       stars.forEach((s, i) => { const k = popS(lt, .75 + i * .1, .5, E.back2); T(s.g, { x: (i - 2) * 118, y: 90, s: k.s * (1 + .22 * Math.max(0, pulse)), r: (1 - k.s) * -90 + pulse * 6, o: k.o });
-        const f = popS(lt, 1.3 + i * .42, .4, E.back2); T(s.f, { s: f.s, o: f.o }); });
+        const f = popS(lt, 1.5 + i * .42, .4, E.back2); T(s.f, { s: f.s, o: f.o }); });
       bars.forEach((b, i) => { const k = p(lt, 2.0 + i * .3, 1.0, E.expo), w = [500, 460, 490][i] * k; const r = $('#b' + i, b); r.setAttribute('width', Math.max(w, 26 * k)); T(b, { o: clamp((lt - 1.9) * 6) }); });
-      bursts.forEach((b, i) => { const base = [3.4, 3.7, 3.98][i % 3], k = (lt - base) / .8; if (k < 0 || k > 1) { T(b, { o: 0 }); return; }
+      bursts.forEach((b, i) => { const base = [3.6, 3.9, 4.18][i % 3], k = (lt - base) / .8; if (k < 0 || k > 1) { T(b, { o: 0 }); return; }
         const a = (i / 10) * Math.PI * 2 + i, d = 140 + k * 250; T(b, { x: Math.cos(a) * d * 1.15, y: 90 + Math.sin(a) * d, s: .28 * (1 - k * .5), r: k * 160, o: 1 - k }); });
     };
   });
@@ -385,28 +385,166 @@ function updateBg(t) {
   const pb = $('#pb'), pb2 = $('#pb2'); const w = 1080 * clamp(t / DURATION); pb.setAttribute('width', w); pb2.setAttribute('width', Math.max(0, w - 14)); pb2.setAttribute('x', 0);
 }
 
-/* ---------- scene-to-scene wipe (two diagonal bars: yellow leads, black follows) ---------- */
-let bars = [];
+/* =====================================================================
+   TRANSITIONS  (After-Effects style: shape-morph reveals, radial clock wipe, liquid, halftone dots,
+   blinds, whip-pan with motion blur, zoom-through with speed lines, slanted slit, confetti sparks)
+   Two families:
+     R = "reveal": the incoming scene is clipped by an animated shape on top of the outgoing scene
+     C = "cover": animated shapes cover the screen, the scenes swap at the midpoint, shapes uncover
+   ===================================================================== */
+const LEAD = .2, TW = .8;
+const SH = {
+  circle: th => 1,
+  flower: th => .72 + .28 * Math.cos(6 * th),
+  star: th => { const f = Math.abs((((th / (Math.PI / 5)) % 2) + 2) % 2 - 1); return .4 + .6 * f; },
+  squircle: th => { const c = Math.abs(Math.cos(th)), s = Math.abs(Math.sin(th)); return 1 / Math.pow(Math.pow(c, 4) + Math.pow(s, 4), .25) / 1.19; },
+};
+(function heartTable() {
+  const B = 180, tab = new Array(B).fill(0);
+  for (let i = 0; i < 6000; i++) {
+    const t = i / 6000 * 2 * Math.PI, x = 16 * Math.pow(Math.sin(t), 3), y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+    const th = Math.atan2(y, x), r = Math.hypot(x, y), b = Math.floor(((th + Math.PI) / (2 * Math.PI)) * B) % B; if (r > tab[b]) tab[b] = r;
+  }
+  const mx = Math.max(...tab); for (let b = 0; b < B; b++) tab[b] /= mx;
+  SH.heart = th => { const a = (((th + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), f = a / (2 * Math.PI) * B, i = Math.floor(f) % B, k = f - Math.floor(f); return mix(tab[i], tab[(i + 1) % B], k); };
+})();
+const morphFn = (list, w) => { const i = Math.min(list.length - 2, Math.floor(w)), k = E.io(clamp(w - i)), A = SH[list[i]], Bf = SH[list[i + 1]]; return th => mix(A(th), Bf(th), k); };
+function blobPath(fn, cx, cy, sc, rot, N = 150) {
+  let d = ''; for (let i = 0; i < N; i++) { const th = i / N * 2 * Math.PI, r = fn(th - rot) * sc; d += (i ? 'L' : 'M') + (cx + Math.cos(th) * r).toFixed(1) + ' ' + (cy + Math.sin(th) * r).toFixed(1); }
+  return d + 'Z';
+}
+const io5 = x => x < .5 ? 16 * Math.pow(x, 5) : 1 - Math.pow(-2 * x + 2, 5) / 2;
+const ioExpo = x => x <= 0 ? 0 : x >= 1 ? 1 : x < .5 ? Math.pow(2, 20 * x - 10) / 2 : (2 - Math.pow(2, -20 * x + 10)) / 2;
+const dist4 = (cx, cy) => Math.max(Math.hypot(cx, cy), Math.hypot(1080 - cx, cy), Math.hypot(cx, 1920 - cy), Math.hypot(1080 - cx, 1920 - cy));
+const setInner = (sc, s, dx = 0, dy = 0) => sc.inner.setAttribute('transform', `translate(${dx.toFixed(1)} ${dy.toFixed(1)}) translate(540 960) scale(${s.toFixed(4)}) translate(-540 -960)`);
+const blur = (sc, id, sx, sy) => { if (sx < .3 && sy < .3) { sc.g.removeAttribute('filter'); return; } $('#' + id + 'g').setAttribute('stdDeviation', `${sx.toFixed(1)} ${sy.toFixed(1)}`); sc.g.setAttribute('filter', `url(#${id})`); };
+const attrs = (e, at) => { for (const k in at) e.setAttribute(k, at[k]); };
+
+const TR = [
+  { k: 'blob', C: 0, o: [540, 1030], list: ['flower', 'circle'], rot: 1.3 },          // logo badge opens as a morphing flower portal
+  { k: 'dots', C: 1 },                                                                   // halftone dots
+  { k: 'push', C: 0 },                                                                   // whip-pan with motion blur + colour streaks
+  { k: 'pie', C: 0, o: [540, 1000] },                                                    // radial clock wipe
+  { k: 'blinds', C: 1 },                                                                 // blinds
+  { k: 'zoom', C: 0 },                                                                   // zoom-through + speed lines
+  { k: 'slit', C: 0 },                                                                   // slanted slit opening
+  { k: 'blob', C: 0, o: [540, 1000], list: ['star', 'squircle', 'circle'], rot: 1.7 },   // star -> squircle -> circle morph
+  { k: 'liquid', C: 1 },                                                                 // liquid wave
+  { k: 'blob', C: 0, o: [540, 1010], list: ['heart', 'circle'], rot: 0, sparks: 1 },     // heart morph + confetti
+];
+
 function initTrans() {
-  const tr = $('#trans');
-  const poly = c => `<polygon points="-1000,-200 1000,-200 1000,2120 -1000,2120" fill="${c}" transform=""/>`;
-  const shape = (c) => { const g = document.createElementNS(NS, 'polygon'); g.setAttribute('points', '-800,-100 1200,-100 800,2020 -1200,2020'); g.setAttribute('fill', c); tr.appendChild(g); return g; };
-  scenes.slice(1).forEach(s => bars.push({ T: s.t0, y: shape(Y), k: shape(K) }));
+  const tr = $('#trans'), defs = $('#stage defs');
+  TR.forEach((c, i) => {
+    c.T = scenes[i + 1].t0;
+    c.ts = c.C ? c.T - LEAD - TW / 2 : c.T - LEAD;
+    c.g = mk(tr, ''); c.g.style.display = 'none';
+    const ns = (tag, at = {}, par = c.g) => { const e = document.createElementNS(NS, tag); attrs(e, at); par.appendChild(e); return e; };
+    if (c.k === 'blob' || c.k === 'pie' || c.k === 'slit') { const cp = ns('clipPath', { id: 'ck' + i }, defs); c.clip = ns('path', {}, cp); }
+    if (c.k === 'blob') {
+      c.kA = ns('path', { fill: 'none', stroke: K, 'stroke-width': 30, 'stroke-linejoin': 'round' });
+      c.yA = ns('path', { fill: 'none', stroke: Y, 'stroke-width': 16, 'stroke-linejoin': 'round' });
+      c.kB = ns('path', { fill: 'none', stroke: K, 'stroke-width': 6, 'stroke-linejoin': 'round' });
+      c.sp = Array.from({ length: c.sparks ? 18 : 10 }, (_, j) => mk(c.g, j % 3 === 0 ? star5(K, 60) : j % 3 === 1 ? spark(Y) : heart(Y, K, 10)));
+    }
+    if (c.k === 'pie') {
+      c.ln = [0, 1, 2, 3].map(j => ({ k: ns('line', { stroke: K, 'stroke-width': 40 - j * 8, 'stroke-linecap': 'round' }), y: ns('line', { stroke: Y, 'stroke-width': 24 - j * 5, 'stroke-linecap': 'round' }) }));
+      c.hub = mk(c.g, `<circle r="58" fill="${K}"/><circle r="36" fill="${Y}"/>`);
+    }
+    if (c.k === 'slit') { c.bK = ns('polygon', { fill: K }); c.bY = ns('polygon', { fill: Y }); c.bK2 = ns('polygon', { fill: K }); c.bY2 = ns('polygon', { fill: Y }); }
+    if (c.k === 'dots') {
+      c.cols = 6; c.rows = 11; c.cell = 180; c.dots = [];
+      for (let r = 0; r < c.rows; r++) for (let q = 0; q < c.cols; q++) c.dots.push({ r, q, K: ns('circle', { fill: K }), Y: ns('circle', { fill: Y }), K2: ns('circle', { fill: K }) });
+    }
+    if (c.k === 'blinds') { c.n = 8; c.sl = Array.from({ length: c.n }, (_, j) => ({ r: ns('rect', { x: -20, width: 1120, fill: j % 2 ? K : Y }), s: ns('rect', { x: -20, width: 1120, fill: j % 2 ? Y : K }) })); }
+    if (c.k === 'zoom') {
+      c.lines = Array.from({ length: 34 }, (_, j) => ns('line', { stroke: j % 2 ? K : Y, 'stroke-linecap': 'round', 'stroke-width': 6 + (j % 3) * 5 }));
+      c.flash = ns('circle', { r: 10, fill: Y, cx: 540, cy: 960 });
+    }
+    if (c.k === 'push') { c.pY = ns('polygon', { fill: Y }); c.pK = ns('polygon', { fill: K }); c.pY2 = ns('polygon', { fill: Yd }); }
+    if (c.k === 'liquid') c.lay = [Yd, Y, K].map(col => ns('path', { fill: col }));
+  });
+  // visibility window of each scene (incoming starts LEAD before its cue so its entrance plays under the transition)
+  scenes.forEach((s, i) => {
+    s.vs = i === 0 ? -1 : s.t0 - LEAD;
+    const nx = TR[i]; s.ve = nx ? (nx.C ? nx.ts + TW / 2 : nx.ts + TW) : 1e9;
+    s.lead = i === 0 ? 0 : LEAD;
+  });
+}
+
+function applyTrans(c, i, t) {
+  const u = (t - c.ts) / TW, A = scenes[i], B = scenes[i + 1];
+  if (u <= 0 || u >= 1) { c.g.style.display = 'none'; return; }
+  c.g.style.display = '';
+  if (c.k === 'blob') {
+    const [cx, cy] = c.o, e = E.io(u), Rc = dist4(cx, cy) * 1.06, sc = Rc * Math.pow(e, 1.15) + 4, w = clamp(u / .8) * (c.list.length - 1);
+    const fn = morphFn(c.list, w), rot = c.rot * u * 2.2, d = blobPath(fn, cx, cy, sc, rot);
+    c.clip.setAttribute('d', d); B.g.setAttribute('clip-path', `url(#ck${i})`);
+    c.kA.setAttribute('d', d); c.yA.setAttribute('d', blobPath(fn, cx, cy, sc * .955, rot)); c.kB.setAttribute('d', blobPath(fn, cx, cy, sc * .91, rot));
+    setInner(A, mix(1, .9, e)); setInner(B, mix(1.1, 1, E.o3(u)));
+    const fade = clamp((u - .05) * 6) * clamp((.95 - u) * 6);
+    c.sp.forEach((g, j) => { const th = j / c.sp.length * 2 * Math.PI + j * .31, r = fn(th - rot) * sc + 30 + 70 * rnd(j + 9) * Math.sin(u * 3);
+      T(g, { x: cx + Math.cos(th) * r, y: cy + Math.sin(th) * r, s: (.22 + rnd(j) * .22) * fade, r: u * 500 * (rnd(j + 2) - .5), o: fade }); });
+  } else if (c.k === 'pie') {
+    const [cx, cy] = c.o, e = E.io(u), ph = e * 2 * Math.PI, a0 = -Math.PI / 2, Rr = 2600;
+    const d = ph >= 2 * Math.PI - .001 ? 'M-200 -200H1300V2200H-200Z' : `M${cx} ${cy}L${cx + Rr * Math.cos(a0)} ${cy + Rr * Math.sin(a0)}A${Rr} ${Rr} 0 ${ph > Math.PI ? 1 : 0} 1 ${cx + Rr * Math.cos(a0 + ph)} ${cy + Rr * Math.sin(a0 + ph)}Z`;
+    c.clip.setAttribute('d', d); B.g.setAttribute('clip-path', `url(#ck${i})`);
+    c.ln.forEach((l, j) => { const a = a0 + Math.max(0, ph - j * .09), op = (1 - j * .28) * (ph > .02 ? 1 : 0);
+      [l.k, l.y].forEach(el => attrs(el, { x1: cx, y1: cy, x2: cx + Rr * Math.cos(a), y2: cy + Rr * Math.sin(a), opacity: op })); });
+    T(c.hub, { x: cx, y: cy, s: 1 + .25 * Math.sin(u * Math.PI), o: clamp(u * 12) * clamp((1 - u) * 12) });
+    setInner(A, mix(1, .93, e)); setInner(B, mix(1.08, 1, E.o3(u)));
+  } else if (c.k === 'slit') {
+    const sk = 200, hwOf = lag => 1000 * Math.min(1, E.back(clamp((u - lag) * 1.05))) + 4, hw = hwOf(0);
+    c.clip.setAttribute('d', `M${540 - hw + sk} -60L${540 + hw + sk} -60L${540 + hw - sk} 1980L${540 - hw - sk} 1980Z`); B.g.setAttribute('clip-path', `url(#ck${i})`);
+    const edge = (sgn, el, w, lag) => { const h2 = hwOf(lag), xt = 540 + sgn * h2 + (sgn > 0 ? sk : -sk) * 0 + sk, xb = 540 + sgn * h2 - sk;
+      el.setAttribute('points', `${xt},-60 ${xt + sgn * w},-60 ${xb + sgn * w},1980 ${xb},1980`); };
+    edge(1, c.bY, 130, .03); edge(1, c.bK, 46, 0); edge(-1, c.bY2, 130, .03); edge(-1, c.bK2, 46, 0);
+    setInner(A, mix(1, .92, E.io(u))); setInner(B, mix(1.06, 1, E.o3(u)));
+  } else if (c.k === 'push') {
+    const e = ioExpo(u), dx = 1080 * e, bl = 90 * Math.sin(Math.PI * u), sk = 120;
+    setInner(A, 1, dx, 0); setInner(B, 1, dx - 1080, 0); blur(A, 'fbA', bl, 0); blur(B, 'fbB', bl, 0);
+    const pg = (el, off, w) => el.setAttribute('points', `${dx + off + sk},-60 ${dx + off + w + sk},-60 ${dx + off + w - sk},1980 ${dx + off - sk},1980`);
+    const fade = Math.sin(Math.PI * u);
+    [c.pY, c.pK, c.pY2].forEach(el => el.style.opacity = clamp(fade * 3));
+    pg(c.pY2, -210 * fade - 40, 120); pg(c.pY, -90 * fade - 10, 110); pg(c.pK, -20, 46);
+  } else if (c.k === 'zoom') {
+    const e = io5(clamp(u * 1.05)), a = Math.sin(Math.PI * clamp((u - .1) / .8));
+    setInner(A, 1 + 2.6 * e); A.g.style.opacity = clamp(1 - (u - .15) * 2.6); blur(A, 'fbA', 26 * e, 26 * e);
+    setInner(B, mix(.38, 1, E.o5(u))); B.g.style.opacity = clamp((u - .12) * 3); blur(B, 'fbB', 22 * (1 - E.o3(u)), 22 * (1 - E.o3(u)));
+    c.lines.forEach((l, j) => { const th = j / c.lines.length * 2 * Math.PI + rnd(j) * .1, r0 = 120 + 160 * rnd(j + 4) + 900 * E.io(u), len = (200 + 700 * rnd(j + 8)) * a;
+      attrs(l, { x1: 540 + Math.cos(th) * r0, y1: 960 + Math.sin(th) * r0, x2: 540 + Math.cos(th) * (r0 + len), y2: 960 + Math.sin(th) * (r0 + len), opacity: a * .95 }); });
+    attrs(c.flash, { r: 80 + 700 * a * a, opacity: .55 * Math.pow(a, 3) });
+  } else if (c.k === 'dots') {
+    const n = c.cols + c.rows - 2;
+    c.dots.forEach(d => { const nrm = (d.q + d.r) / n, cover = clamp((u - nrm * .26) / .24), unc = clamp((u - .5 - (1 - nrm) * .26) / .24);
+      const s = Math.max(0, E.back(cover) * (1 - E.io(unc))), rr = 142 * s, x = d.q * c.cell + c.cell / 2, y = d.r * c.cell + c.cell / 2;
+      attrs(d.K, { cx: x, cy: y, r: rr }); attrs(d.Y, { cx: x, cy: y, r: rr * .72 }); attrs(d.K2, { cx: x, cy: y, r: rr * .3 }); });
+  } else if (c.k === 'blinds') {
+    const h = 240;
+    c.sl.forEach((s, j) => { const cover = E.io(clamp((u - j * .038) / .22)), unc = E.io(clamp((u - .5 - (c.n - 1 - j) * .038) / .22));
+      const y0 = j * h - 2, bottom = y0 + (h + 4) * cover, top = y0 + (h + 4) * unc, hh = Math.max(0, bottom - top);
+      attrs(s.r, { y: top, height: hh }); attrs(s.s, { y: top + hh * .66, height: hh * .34 }); });
+  } else if (c.k === 'liquid') {
+    const lag = [0, .05, .1];
+    c.lay.forEach((el, j) => { const cov = E.io(clamp((u - lag[j]) / .38)), unc = E.io(clamp((u - .5 - lag[j]) / .38));
+      const top = 2040 - 2400 * cov, bot = 2040 - 2400 * unc; let d = '', dB = '';
+      for (let x = -40; x <= 1120; x += 20) { const w = 70 * Math.sin(x * .009 + t * 7 + j) + 40 * Math.sin(x * .017 - t * 5 + j * 2); d += (d ? 'L' : 'M') + x + ' ' + (top + w).toFixed(1); }
+      for (let x = 1120; x >= -40; x -= 20) { const w = 70 * Math.sin(x * .009 + t * 7 + j + 1) + 40 * Math.sin(x * .017 - t * 5 + j * 2 + 1); dB += 'L' + x + ' ' + (bot + w * (unc > 0 ? 1 : 0)).toFixed(1); }
+      el.setAttribute('d', d + dB + 'Z'); });
+  }
 }
 function updateTrans(t) {
-  bars.forEach(b => {
-    const W0 = .56, put = (g, d, lag) => { const k = clamp((t - (b.T - W0 / 2 + lag)) / W0); const c = mix(-1300, 2300, E.io(k)); g.setAttribute('transform', `translate(${c.toFixed(1)} 0)`); g.style.display = (k <= 0 || k >= 1) ? 'none' : ''; };
-    put(b.y, 0, -.08); put(b.k, 0, 0);
-  });
+  scenes.forEach(s => { s.g.removeAttribute('clip-path'); s.g.removeAttribute('filter'); s.g.style.opacity = 1; s.inner.removeAttribute('transform'); });
+  TR.forEach((c, i) => applyTrans(c, i, t));
 }
 
 /* ---------- main ---------- */
 function renderFrame(t) {
   updateBg(t);
   scenes.forEach(s => {
-    const on = t >= s.t0 && t < s.t1;
+    const on = t >= s.vs && t < s.ve;
     s.g.style.display = on ? '' : 'none';
-    if (on) { const lt = t - s.t0; s.ban(lt); s.upd(lt, t); T(s.ill, { x: 540, y: 1030 + (1 - p(lt, .05, .5, E.o3)) * 30, s: 1.1 }); }
+    if (on) { const lt = t - s.t0 + s.lead; s.ban(lt); s.upd(lt, t); T(s.ill, { x: 540, y: 1030 + (1 - p(lt, .05, .5, E.o3)) * 30, s: 1.1 }); }
   });
   updateTrans(t);
 }
