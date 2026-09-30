@@ -1,2 +1,4 @@
 work/
 reel/build/*.wav
+__pycache__/
+*.whl
