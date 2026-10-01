@@ -10,6 +10,9 @@ html,body{margin:0;background:transparent;overflow:hidden}
 
 .pap img{display:block;width:100%;height:auto;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
 .pap .tx{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;color:#24160c;line-height:1.05;text-shadow:0 2px 2px rgba(0,0,0,.18)}
+.bars{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.bars span{display:block;background:#8a3716;color:#fff;padding:0 26px 6px;white-space:nowrap;line-height:1.25;text-shadow:0 3px 6px rgba(0,0,0,.35)}
+.circ{color:#fff;white-space:nowrap;text-align:center;text-shadow:0 3px 3px rgba(0,0,0,.6),0 0 14px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
 svg{position:absolute;overflow:visible}
 </style>
 <div id="st"></div>
@@ -42,6 +45,18 @@ function person(src,name,x,y,w){
  var c=el('pap','<img src="'+CARD+'">','position:absolute;left:0;top:'+(ph+10)+'px;width:'+w+'px',g);
  var t=el('tx',name,'left:22%;top:14%;width:72%;height:58%',c);fitBox(t,w*.72,.58*w*.78,name.split('<br>').length);
  return g}
+
+function bars(lines,right,y,size){var e=el('g bars','','right:'+right+'px;top:'+y+'px;');e.innerHTML=lines.map(function(l){return '<span style="font-size:'+size+'px">'+l+'</span>'}).join('');return e}
+function circled(text,cx,cy,size,tin,tout){
+ var e=el('g circ',text,'left:'+(cx-700)+'px;top:'+(cy-90)+'px;width:1400px;height:180px;font-size:'+size+'px');
+ var inner=document.createElement('span');inner.textContent=text;e.textContent='';e.appendChild(inner);
+ var w=inner.getBoundingClientRect().width,h=size*1.15,rx=w/2+70,ry=h/2+30;
+ var s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('class','g');s.style.cssText='left:0;top:0;width:1920px;height:1080px';s.setAttribute('viewBox','0 0 1920 1080');
+ function ell(rx,ry,rot,ox,oy,sw){var pts=[];for(var i=0;i<=64;i++){var a=-1.9+i/64*(Math.PI*2+.35);pts.push([rx*Math.cos(a),ry*Math.sin(a)])}
+  var c=Math.cos(rot),sn=Math.sin(rot);return 'M'+pts.map(function(p){return (cx+ox+p[0]*c-p[1]*sn).toFixed(1)+' '+(cy+oy+p[0]*sn+p[1]*c).toFixed(1)}).join(' L')}
+ s.innerHTML='<path pathLength="1" d="'+ell(rx,ry,-.012,0,2)+'" fill="none" stroke="#e01b1b" stroke-width="5" stroke-linecap="round" style="stroke-dasharray:1;stroke-dashoffset:1"/><path pathLength="1" d="'+ell(rx*.985,ry*1.05,.01,4,-3)+'" fill="none" stroke="#e01b1b" stroke-width="3.5" stroke-linecap="round" style="stroke-dasharray:1;stroke-dashoffset:1"/>';
+ st.appendChild(s);G.push({e:s,a:tin+.3,b:tout,draw:true,fx:0,fy:0,rot:0,ph:0});
+ return e}
 var CARD='assets/index_card.webp',BAN='assets/paper_banner.webp';
 function wavy(x,y,w,h,tin,tout){var s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('class','g');s.style.cssText='left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px';s.setAttribute('viewBox','0 0 '+w+' '+h);
  s.innerHTML='<path pathLength="1" d="M'+w/2+' 0 C'+(w*.1)+' '+h*.25+' '+(w*.9)+' '+h*.5+' '+w/2+' '+h*.75+' S'+(w*.5)+' '+h*.95+' '+w/2+' '+h+'" fill="none" stroke="#ea1717" stroke-width="12" stroke-linecap="round" style="stroke-dasharray:1;stroke-dashoffset:1"/>';
@@ -63,12 +78,9 @@ add(person('assets/abduh.png','محمد عبده',1170,140,330),3.9,6-o,200);
 /* 3: 6-10  الاهتمام بالناحية الدينية */
 add(card('الاهتمام بالناحية<br>الدينية',1400,300,480,0,CARD,[10,14,80,58]),6.1,10-o,200);
 /* 4: 10-13  اشمعنا الناحية الدينية؟ */
-add(tape('اشمعنا',1450,360,430,120,72),10.0,13-o,200,-2);
-add(tape('الناحية الدينية؟',1420,500,480,120,72),10.25,13-o,200,2);
-/* 5: 13-16  خرافات وشعوذة (left side) */
-add(card('خرافات',10,240,430,0,BAN,[14,20,70,36]),13.0,15.72-.2,-200,-1);
-add(card('شعوذة',20,500,430,0,BAN,[14,20,70,36]),13.3,15.72-.2,-200,1);
-
+add(bars(['اشمعنا','الناحية الدينية؟'],60,360,84),10.0,13-o,200);
+/* 5: 13-16  خرافات وشعوذة */
+add(circled('خرافات وشعوذة',960,850,104,13.8,15.72-.2),13.8,15.72-.2,0);
 }
 window.setT=function(t){
  G.forEach(function(g){
