@@ -12,12 +12,14 @@ Owner (non-technical, speaks Egyptian Arabic) makes promo/UGC reels for his prod
 Gemini (Antigravity) runs on the owner's Windows PC and provides real assets/facts. Talk to it ONLY through GitHub:
 - Claude -> Gemini: numbered files `comms/to-gemini/NNN-*.md` in THIS repo/branch (public). Gemini polls every ~5 min (verified, latency 5-10 min).
 - Gemini -> Claude: `https://github.com/sdfbs/happyduck-assets` (main): assets in `happyduck-assets/**`, replies `comms/to-claude/NNN-reply.md`, voice in `happyduck-assets/voice/` (words.json = word timings). Clone/pull anonymously to `/home/user/assets-repo`.
-- Last message numbers: 001..006 used (next = 007). Verify everything Gemini delivers by opening it; his reply texts contain small factual slips.
+- Last message numbers: 001..007 used (next = 008). Verify everything Gemini delivers by opening it; his reply texts contain small factual slips.
 
 ## Current status (update this section at the end of every session)
 - Reel v4 (65 s, 9:16, Egyptian VO, generated music, visual motion graphics, one hero per beat) was delivered to the owner. Files: `reel/` (scenes.js, timeline.js, render.js, build/*) and the same engine in the skill. The voice-over is `comms/assets/vo_original.wav` (75 s, hook #4 script in `comms/SCRIPT.md`).
 - Assets from Gemini (English UI screenshots 1040x1500, clips, branding, fonts) are in `sdfbs/happyduck-assets`. `ui_09` is now the real caption editor. The Arabic screenshots (`ar/`) are NOT used (owner wants English only).
-- PENDING next step: integrate Gemini's `voice/words.json` (156 word timings; Whisper text has errors like "الزكاة" for "الذكاء", "المتير" for "المدير", so align its TIMES to the script tokens from `reel/phrases.py`, do not use its text) to make karaoke captions and beat timing exact, then re-render v5 (`engine/build.sh`) and send it. Map original-time -> tightened-time using the piecewise map in `make_audio.py` (`mp`) or expose it.
+- v5 DONE (2026-10-01): karaoke captions + phrase/beat times now use Gemini's `words.json` TIMES aligned to script tokens by `wordsync.py` (fuzzy match; called from `make_audio.py`, which now takes `<wav> [speed]` and writes `words` per phrase into timeline.json; `scenes.js` uses them). Output `reel/out/reel_v5.mp4` (sent to owner). Engine copy in the skill updated.
+- WARNING: Gemini's latest `happyduck-assets` commit e00504e broke `ui_01..ui_08` (all became the caption editor). Use the versions from first commit `306b519` (`git show 306b519:happyduck-assets/ui_0N...`) until he fixes them (asked in `comms/to-gemini/007-ui-regression.md`). Next message number = 008.
+- Rebuild from scratch: assets from the assets repo (+clips extracted per SKILL.md), `python3 align.py` (uses build/align.json; hardcoded path in reel/align.py), `python3 make_audio.py ../comms/assets/vo_original.wav`, copy build/* to assets/, `node render.js --all --workers 4 --out frames`, ffmpeg encode.
 - Waiting on the owner: feedback on v4 (he sends a screenshot of any scene he dislikes), and "كمل" whenever Gemini finished something.
 
 ## First message the owner can send in a new session

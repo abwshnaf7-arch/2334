@@ -1,8 +1,10 @@
 import json,wave,subprocess,numpy as np
 from scipy.signal import butter,sosfilt,resample_poly
 FF="/usr/local/lib/python3.11/dist-packages/imageio_ffmpeg/binaries/ffmpeg-linux-x86_64-v7.0.2"
-SRC="/root/.claude/uploads/960b1a2e-111e-5610-98f9-f45e0776afe5/669966e0-Generated_Audio_September_30_2026_-_4_01AM.wav"
-SPEED=1.04
+import sys,os
+SRC=sys.argv[1] if len(sys.argv)>1 else "../comms/assets/vo_original.wav"
+WORDS=os.environ.get("WORDS_JSON","/home/user/assets-repo/happyduck-assets/voice/words.json")
+SPEED=float(sys.argv[2]) if len(sys.argv)>2 else 1.04
 d=json.load(open('build/align.json'));P=d['phrases']
 w=wave.open(SRC);sr=w.getframerate();x=np.frombuffer(w.readframes(w.getnframes()),dtype=np.int16).astype(np.float32)/32768
 # global silence shrinking with piecewise time map
@@ -41,13 +43,22 @@ v=v/(np.abs(v).max()+1e-9)*0.85
 ot=np.array([m_[0] for m_ in mp]);nt=np.array([m_[1] for m_ in mp])
 def mapt(t):return float(np.interp(t,ot,nt))
 tl=[{'text':p['text'],'t0':mapt(p['t0']),'t1':mapt(p['t1'])} for p in P]
+WS=None
+if os.path.exists(WORDS):
+    from wordsync import align as wal
+    WS,_m,_n=wal(WORDS);print('words matched',_m,'of',_n)
+    for q,ws in zip(tl,WS):
+        for x in ws:x['t0']=mapt(x['t0']);x['t1']=mapt(x['t1'])
+        q['words']=ws;q['t0']=ws[0]['t0'];q['t1']=ws[-1]['t1']
 def wr(path,a,rate):
     with wave.open(path,'wb') as f:
         f.setnchannels(a.shape[1] if a.ndim>1 else 1);f.setsampwidth(2);f.setframerate(rate)
         f.writeframes((np.clip(a,-1,1)*32767).astype('<i2').tobytes())
 wr('build/vo_raw.wav',v,sr)
 subprocess.run([FF,'-y','-loglevel','error','-i','build/vo_raw.wav','-filter:a',f'atempo={SPEED}','-ar','44100','build/vo.wav'],check=True)
-for q in tl:q['t0']/=SPEED;q['t1']/=SPEED
+for q in tl:
+    q['t0']/=SPEED;q['t1']/=SPEED
+    for x in q.get('words',[]):x['t0']/=SPEED;x['t1']/=SPEED
 vd=(len(v)/sr)/SPEED
 json.dump({'phrases':tl,'dur':vd},open('build/timeline.json','w'),ensure_ascii=False,indent=1)
 print('vo dur',round(vd,2))

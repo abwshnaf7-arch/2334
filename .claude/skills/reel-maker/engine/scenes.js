@@ -501,7 +501,17 @@ function mergeEn(t) { const o = []; t.forEach(w => { if (/^[A-Za-z]/.test(w) && 
 function buildCaptions() {
   const words = [];
   P.forEach(p => {
+    if (p.words) {
+      // real word times (words.json aligned to the script); merge consecutive English words into one box
+      const o = [];
+      p.words.forEach(x => {
+        const en = /^[A-Za-z]/.test(x.w), last = o[o.length - 1];
+        if (en && last && last.en && !/\./.test(last.w + x.w)) { last.w += ' ' + x.w; last.t1 = x.t1; } else o.push({ w: x.w, t0: x.t0, t1: x.t1, en: /[A-Za-z]/.test(x.w) });
+      });
+      o.forEach(x => words.push(x)); p._n = o.length; return;
+    }
     const toks = mergeEn(p.text.replace(/[،.]/g, '').split(/\s+/).filter(Boolean));
+    p._n = toks.length;
     const wts = toks.map(w => Math.max(2, w.length));
     const sum = wts.reduce((a, b) => a + b, 0);
     let c = p.t0;
@@ -510,8 +520,7 @@ function buildCaptions() {
   GROUPS = [];
   let k = 0;
   P.forEach(p => {
-    const toks = mergeEn(p.text.replace(/[،.]/g, '').split(/\s+/).filter(Boolean));
-    const n = toks.length, ng = Math.ceil(n / 3);
+    const n = p._n, ng = Math.ceil(n / 3);
     let idx = 0;
     for (let g = 0; g < ng; g++) {
       const sz = Math.round((n - idx) / (ng - g));
