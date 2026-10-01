@@ -1,0 +1,121 @@
+<meta charset="utf-8">
+<title>overlay</title>
+<style>
+@font-face{font-family:'Fatimah Arabic ITF';src:url('fonts/FatimahArabicITF-Black.otf') format('opentype')}
+html,body{margin:0;background:transparent;overflow:hidden}
+#st{position:relative;width:1920px;height:1080px;direction:rtl;font-family:'Fatimah Arabic ITF','Cairo',sans-serif}
+.g{position:absolute;opacity:0;will-change:transform}
+.tape{background:#f6d92b;display:flex;align-items:center;justify-content:center;color:#111;white-space:nowrap;padding:0 28px;box-shadow:0 6px 14px rgba(0,0,0,.35);
+ clip-path:polygon(0 6%,2% 0,4% 7%,96% 0,98% 8%,100% 3%,100% 94%,98% 100%,96% 92%,4% 100%,2% 93%,0 98%)}
+
+.pap img{display:block;width:100%;height:auto;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
+.pap .tx{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;color:#24160c;line-height:1.05;text-shadow:0 2px 2px rgba(0,0,0,.18)}
+.bars{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.bars span{display:block;background:#8a3716;color:#fff;padding:0 26px 6px;white-space:nowrap;line-height:1.25;text-shadow:0 3px 6px rgba(0,0,0,.35)}
+.circ{color:#fff;white-space:nowrap;text-align:center;text-shadow:0 3px 3px rgba(0,0,0,.6),0 0 14px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
+svg{position:absolute;overflow:visible}
+</style>
+<div id="st"></div>
+<script>
+var FPS=25,st=document.getElementById('st'),G=[];
+function clamp(x){return x<0?0:x>1?1:x}
+function bez(x1,y1,x2,y2){function f(t,a,b){return 3*a*(1-t)*(1-t)*t+3*b*(1-t)*t*t+t*t*t}
+ return function(x){if(x<=0)return 0;if(x>=1)return 1;var lo=0,hi=1,t=x;for(var i=0;i<30;i++){t=(lo+hi)/2;if(f(t,x1,x2)<x)lo=t;else hi=t}return f(t,y1,y2)}}
+var EI=bez(.12,0,.5,1), EO=bez(.5,0,.88,1);
+function el(cls,html,css,parent){var e=document.createElement('div');e.className=cls;e.innerHTML=html||'';e.style.cssText=css||'';(parent||st).appendChild(e);return e}
+function fit(box,maxW,size){var s=size;box.style.fontSize=s+'px';box.style.whiteSpace='nowrap';
+ var w=box.scrollWidth; if(w>maxW){s=Math.floor(s*maxW/w);box.style.fontSize=s+'px'}}
+/* g(el, tIn, tOut, fromX, rot, delay) */
+function add(e,tin,tout,fx,rot,fy){G.push({e:e,a:tin,b:tout,fx:fx||0,fy:fy||0,rot:rot||0,ph:Math.random()*6})}
+function tape(text,x,y,w,h,size,rot){var e=el('g tape',text,'left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;font-size:'+size+'px');fit(e,w-60,size);return e}
+function card(text,x,y,w,rot,src,tb){/* tb = text box [l,t,w,h] in % */
+ var e=el('g pap','<img src="'+src+'">','left:'+x+'px;top:'+y+'px;width:'+w+'px');
+ var t=el('tx',text,'left:'+tb[0]+'%;top:'+tb[1]+'%;width:'+tb[2]+'%;height:'+tb[3]+'%;',e);
+ t.style.fontSize='60px';
+ var lines=text.split('<br>').length,tw=w*tb[2]/100;fitBox(t,tw,tb[3]/100*w*0.78,lines);
+ return e}
+function fitBox(t,maxW,maxH,lines){var s=Math.min(90,Math.floor(maxH/lines/1.05));t.style.fontSize=s+'px';t.style.whiteSpace='nowrap';
+ var w=t.scrollWidth;if(w>maxW)t.style.fontSize=Math.floor(s*maxW/w)+'px'}
+
+function person(src,x,y,w){
+ var ph=w*550/431;
+ var g=el('g','','left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+ph+'px');
+ var p=el('pap','<img src="assets/paper.png">','position:absolute;left:0;top:0;width:'+w+'px',g);
+ var im=document.createElement('img');im.src=src;im.style.cssText='position:absolute;left:12%;bottom:5%;width:76%;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))';p.appendChild(im);
+ return g}
+
+function bars(lines,right,y,size){var e=el('g bars','','right:'+right+'px;top:'+y+'px;');e.innerHTML=lines.map(function(l){return '<span style="font-size:'+size+'px">'+l+'</span>'}).join('');return e}
+function circled(text,cx,cy,size,tin,tout){
+ var e=el('g circ',text,'left:'+(cx-700)+'px;top:'+(cy-90)+'px;width:1400px;height:180px;font-size:'+size+'px');
+ var inner=document.createElement('span');inner.textContent=text;e.textContent='';e.appendChild(inner);
+ var w=inner.getBoundingClientRect().width,h=size*1.15,rx=w/2+70,ry=h/2+30;
+ var s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('class','g');s.style.cssText='left:0;top:0;width:1920px;height:1080px';s.setAttribute('viewBox','0 0 1920 1080');
+ function ell(rx,ry,rot,ox,oy,sw){var pts=[];for(var i=0;i<=64;i++){var a=-1.9+i/64*(Math.PI*2+.35);pts.push([rx*Math.cos(a),ry*Math.sin(a)])}
+  var c=Math.cos(rot),sn=Math.sin(rot);return 'M'+pts.map(function(p){return (cx+ox+p[0]*c-p[1]*sn).toFixed(1)+' '+(cy+oy+p[0]*sn+p[1]*c).toFixed(1)}).join(' L')}
+ s.innerHTML='<path pathLength="1" d="'+ell(rx,ry,-.012,0,2)+'" fill="none" stroke="#e01b1b" stroke-width="5" stroke-linecap="round" style="stroke-dasharray:1;stroke-dashoffset:1"/><path pathLength="1" d="'+ell(rx*.985,ry*1.05,.01,4,-3)+'" fill="none" stroke="#e01b1b" stroke-width="3.5" stroke-linecap="round" style="stroke-dasharray:1;stroke-dashoffset:1"/>';
+ st.appendChild(s);G.push({e:s,a:tin+.3,b:tout,draw:true,fx:0,fy:0,rot:0,ph:0});
+ return e}
+
+function tapeimg(text,x,y,w,size){
+ var h=w*127/496;
+ var g=el('g','','left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px');
+ el('', '<img src="assets/tape.png" style="display:block;width:100%;height:100%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4))">','position:absolute;left:0;top:0;width:100%;height:100%',g);
+ var t=el('','','position:absolute;left:9%;top:0;width:82%;height:100%;display:flex;align-items:center;justify-content:center;color:#141414;white-space:nowrap;font-size:'+size+'px',g);
+ t.textContent=text;fit(t,w*.82,size);return g}
+function pagePerson(src,x,y,w,dir){
+ var ph=w*550/431;
+ var o=el('g','','left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+ph+'px;perspective:1800px');
+ var pg=el('','','position:absolute;left:0;top:0;width:'+w+'px;height:'+ph+'px;transform-origin:'+(dir>0?'left':'right')+' center;backface-visibility:hidden',o);
+ pg.className='pg';
+ pg.innerHTML='<img src="assets/paper.png" style="position:absolute;left:0;top:0;width:100%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))">'+
+  '<img src="'+src+'" style="position:absolute;left:14%;top:8.5%;width:76%;height:84%;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,.4)">'+
+  '<div class="shade" style="position:absolute;left:0;top:0;width:100%;height:100%;background:linear-gradient('+(dir>0?'90deg':'270deg')+',rgba(0,0,0,.85),rgba(0,0,0,0));opacity:0"></div>';
+ return o}
+function addTurn(e,a,b,dir){G.push({e:e,a:a,b:b,turn:dir,fx:0,fy:0,rot:0,ph:0})}
+var CARD='assets/index_card.webp',BAN='assets/paper_banner.webp';
+function wavy(x,y,w,h,tin,tout){var s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('class','g');s.style.cssText='left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px';s.setAttribute('viewBox','0 0 '+w+' '+h);
+ s.innerHTML='<path pathLength="1" d="M'+w/2+' 0 C'+(w*.1)+' '+h*.25+' '+(w*.9)+' '+h*.5+' '+w/2+' '+h*.75+' S'+(w*.5)+' '+h*.95+' '+w/2+' '+h+'" fill="none" stroke="#ea1717" stroke-width="12" stroke-linecap="round" style="stroke-dasharray:1;stroke-dashoffset:1"/>';
+ st.appendChild(s);G.push({e:s,a:tin,b:tout,draw:true,fx:0,fy:0,rot:0,ph:0})}
+function arrow(x1,y1,x2,y2,tin,tout){var w=Math.abs(x2-x1)+40,h=Math.abs(y2-y1)+40,s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('class','g');
+ s.style.cssText='left:0;top:0;width:1920px;height:1080px';s.setAttribute('viewBox','0 0 1920 1080');
+ var a=Math.atan2(y2-y1,x2-x1),L=44,p1=[x2-L*Math.cos(a-.45),y2-L*Math.sin(a-.45)],p2=[x2-L*Math.cos(a+.45),y2-L*Math.sin(a+.45)];
+ s.innerHTML='<path pathLength="1" d="M'+x1+' '+y1+' L'+x2+' '+y2+'" stroke="#e11d1d" stroke-width="6" stroke-linecap="round" style="stroke-dasharray:1;stroke-dashoffset:1"/><path pathLength="1" d="M'+p1+' L'+x2+' '+y2+' L'+p2+'" fill="none" stroke="#e11d1d" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray:1;stroke-dashoffset:1"/>';
+ st.appendChild(s);G.push({e:s,a:tin,b:tout,draw:true,fx:0,fy:0,rot:0,ph:0})}
+
+function build(){
+var o=.22, END=21.48;
+/* 1: 0-5  دولة وطنية حديثة / الحريات الفردية / الديمقراطية */
+add(bars(['دولة وطنية حديثة','الحريات الفردية','والديمقراطية'],60,300,74),0.15,5-o,200);
+/* 2: 5-9  التيار الثالث / الحركة الوطنية المصرية */
+add(tapeimg('التيار الثالث',1340,300,540,84),5.1,9-o,200);
+add(tapeimg('الحركة الوطنية المصرية',1340,450,540,84),6.3,9-o,200);
+/* 3: 9-14  مصطفى كامل (يمين) ومحمد فريد (شمال) - page turn */
+addTurn(pagePerson('assets/kamel.jpg',1440,250,390,1),9.1,14-.3,1);
+addTurn(pagePerson('assets/farid.jpg',90,250,390,-1),12.1,14-.3,-1);
+/* 4: 14-18  شعارات وطنية */
+add(circled('شعارات وطنية',960,890,108,14.2,18-o),14.2,18-o,0);
+/* 5: 18-22  تحقيق الاستقلال الوطني / التخلص من الاحتلال الأجنبي */
+add(card('تحقيق الاستقلال<br>الوطني',1440,130,440,0,CARD,[20,12,76,58]),18.1,END-.2,200);
+wavy(1620,420,70,150,18.7,END-.2);
+add(card('التخلص من<br>الاحتلال الأجنبي',1440,570,440,0,CARD,[20,12,76,58]),19.1,END-.2,200);
+}
+window.setT=function(t){
+ G.forEach(function(g){
+  if(g.turn){var ti=EI(clamp((t-g.a)/.85)),to=EO(clamp((t-g.b)/.5)),ang=((1-ti)+to)*92*g.turn;
+    var pgx=g.e.firstChild;pgx.style.transform='rotateY('+ang+'deg)';pgx.querySelector('.shade').style.opacity=Math.min(1,Math.abs(ang)/80);
+    g.e.style.opacity=(t>=g.a&&t<g.b+.52&&Math.abs(ang)<91)?1:0;return}
+  var pi=EI(clamp((t-g.a)/.6)),po=EO(clamp((t-g.b)/.35));
+  var vis=t>=g.a&&t<g.b+.36;
+  if(g.draw){var p=EI(clamp((t-g.a)/.5)),ps=g.e.querySelectorAll('path'),n=ps.length;
+    ps.forEach(function(pa,i){var q=n>1?(i==0?clamp(p/.7):clamp((p-.7)/.3)):p;pa.style.strokeDashoffset=1-q});
+    g.e.style.opacity=vis?(1-po):0;return}
+  var op=Math.min(clamp(pi*2.5),1-po);
+  var x=(1-pi)*g.fx+po*g.fx*.6, sc=(0.9+0.1*pi)*(1-0.08*po);
+  var wob=0, rot=0;
+  g.e.style.opacity=vis?op:0;
+  g.e.style.filter=(pi<1)?'blur('+((1-pi)*6)+'px)':(po>0?'blur('+(po*5)+'px)':'');
+  g.e.style.transform='translate('+x+'px,'+wob+'px) scale('+sc+')';
+ });
+};
+document.fonts.load('60px "Fatimah Arabic ITF"').then(function(){return document.fonts.ready}).then(function(){build();document.title='ready';window.setT(0)});
+</script>
