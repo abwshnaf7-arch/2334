@@ -37,7 +37,6 @@ function equal(cx,cy){return svg('left:'+(cx-95)+'px;top:'+(cy-60)+'px;width:190
 /* ---- content: ربط العملة المصرية بالعملة الأجنبية بحيث أن العملتين والاقتصادين يبقوا واحد ---- */
 var AX=1330, BX=420;
 /* A: ربط العملة المصرية */
-var tape=mk('div','a','<img src="assets/tape.png" style="display:block;width:100%;height:100%;filter:drop-shadow(0 5px 8px rgba(0,0,0,.4))"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:40px;color:#141414">ربط</div>','left:'+(AX-110)+'px;top:40px;width:220px;height:56px');add(tape,0.15,.5,FX.pop);
 var la=mk('div','a lbl','العملة المصرية','left:'+(AX-200)+'px;top:125px;width:400px');add(la,0.55,.5,FX.pop);
 var sa=scribble(AX-140,196,280);add(sa,0.95,.5,FX.draw);
 var aa=arrow(AX,232);add(aa,1.15,.5,FX.draw);
@@ -48,7 +47,6 @@ var sb=scribble(BX-140,196,280);add(sb,2.5,.5,FX.draw);
 var ab=arrow(BX,232);add(ab,2.7,.5,FX.draw);
 var uk=mk('div','a','<img class="stk" src="assets/money_uk.png">','left:'+(BX-280)+'px;top:369px;width:560px');add(uk,2.75,.7,FX.pop);
 /* C: بحيث أن العملتين والاقتصادين يبقوا واحد */
-var eq=equal(915,520);add(eq,4.1,.6,FX.draw);
 var t1=mk('div','a lbl','العملتين والاقتصادين','left:'+(850-420)+'px;top:742px;width:840px;font-size:58px');add(t1,4.0,.5,FX.pop);
 var t2=mk('div','a lbl','<span class="hl" id="hl">يبقوا واحد</span>','left:'+(850-420)+'px;top:812px;width:840px;font-size:76px');add(t2,4.45,.5,FX.pop);
 add(document.getElementById('hl'),4.9,.7,FX.mark);
