@@ -1,0 +1,67 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>tape-unfold</title>
+<style>html,body{margin:0;background:#13ff08;overflow:hidden}#c{display:block;width:1000px;height:1000px}</style>
+<canvas id="c" width="1000" height="1000"></canvas>
+<script type="module">
+import * as THREE from './map3d/lib/three.module.js';
+const SZ=1000, DUR=1;
+const clamp=x=>x<0?0:x>1?1:x;
+function bez(x1,y1,x2,y2){const f=(t,a,b)=>3*a*(1-t)*(1-t)*t+3*b*(1-t)*t*t+t*t*t;return x=>{if(x<=0)return 0;if(x>=1)return 1;let lo=0,hi=1,t=x;for(let i=0;i<30;i++){t=(lo+hi)/2;if(f(t,x1,x2)<x)lo=t;else hi=t}return f(t,y1,y2)}}
+const EO=bez(.1,0,.3,1);
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),alpha:true,antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(1);renderer.setSize(SZ,SZ,false);renderer.setClearColor(0x000000,0);
+const scene=new THREE.Scene();
+const fov=25,dist=(SZ/2)/Math.tan(fov/2*Math.PI/180);
+const cam=new THREE.PerspectiveCamera(fov,1,10,10000);cam.position.set(0,0,dist);
+const tex=await new THREE.TextureLoader().loadAsync('assets/tape.png');tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=8;
+const W=800,H=W*127/496, CX=514.5-500, CY=-(481.5-500);   // final centre (ref: x 114..915, y 398..565)
+const geo=new THREE.PlaneGeometry(W,H,160,12);
+const base=geo.attributes.position.array.slice();
+const mat=new THREE.ShaderMaterial({transparent:true,side:THREE.DoubleSide,uniforms:{map:{value:tex}},
+ vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+ fragmentShader:'uniform sampler2D map;varying vec2 vUv;void main(){vec4 c=texture2D(map,vUv);if(gl_FrontFacing){gl_FragColor=vec4(c.rgb,c.a);}else{gl_FragColor=vec4(mix(c.rgb,vec3(1.),.38),c.a*.72);}}'});
+const mesh=new THREE.Mesh(geo,mat);mesh.frustumCulled=false;scene.add(mesh);
+// crease: diagonal line "\" through x=hx; flap = everything to its right
+const hx=W*.17, ang=-62*Math.PI/180;
+const dx=Math.cos(ang), dy=Math.sin(ang), nx=-dy, ny=dx;  // (nx,ny) points to the right side of the crease
+const kx=dx, ky=dy;
+function deform(phi,slideX,slideY,roll){
+  const pa=geo.attributes.position;
+  const cphi=Math.cos(phi), sphi=Math.sin(phi);
+  for(let i=0;i<pa.count;i++){
+    let x=base[i*3], y=base[i*3+1], z=0;
+    const vy=y;           // vector from crease anchor (hx measured from left edge)
+    const ox=x+W/2-hx;                   // x relative to crease anchor along tape
+    const dist=ox*nx+vy*ny;           // signed distance to the right of crease (nx,ny orientation)
+    if(dist>0){
+      // rotate (ox,vy,0) about axis (kx,ky,0) by phi (Rodrigues)
+      const vxr=ox, vyr=vy, vzr=0;
+      const kv=kx*vxr+ky*vyr;
+      const cx=ky*vzr-0*vyr, cy=0*vxr-kx*vzr, cz=kx*vyr-ky*vxr;
+      const rx=vxr*cphi+cx*sphi+kx*kv*(1-cphi);
+      const ry=vyr*cphi+cy*sphi+ky*kv*(1-cphi);
+      const rz=vzr*cphi+cz*sphi;
+      x=rx+hx-W/2; y=ry; z=rz;
+    }
+    // overall slide + gentle wave while travelling
+    const u=(x+W/2)/W;
+    z+=Math.sin(u*5+roll*6)*14*roll;
+    pa.setXYZ(i,x+slideX,y+slideY+Math.sin(u*4-roll*5)*10*roll,z);
+  }
+  pa.needsUpdate=true;
+}
+window.setT=function(t){
+  const s=clamp((t-.03)/.2), e=EO(s);
+  const slideX=CX-(1-e)*620, slideY=CY+(1-e)*60;
+  const f=clamp((t-.03)/.27);
+  // flap unfolds with a tiny overshoot
+  const fe=EO(f);
+  const phi=Math.PI*(1-fe)+ (f>.7&&f<1?Math.sin((f-.7)/.3*Math.PI)*.07:0);
+  const roll=(1-e);
+  mesh.visible=t>=.02;
+  deform(Math.max(phi,0),slideX,slideY,roll);
+  renderer.render(scene,cam);
+};
+document.title='ready';window.setT(0);
+</script>
