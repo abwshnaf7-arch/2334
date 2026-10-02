@@ -298,33 +298,47 @@ $("clearMisses").onclick=()=>{misses=[];saveMisses();$("missesBtn").onclick()};
 $("copyMisses").onclick=async()=>{const t=missesText();try{await navigator.clipboard.writeText(t);$("copyMisses").textContent="اتنسخت ✓"}catch(e){const ta=$("missText");ta.hidden=false;ta.value=t;ta.select()}};
 
 function setMode(cls,text){$("mode").className="mode "+cls;$("modeText").textContent=text}
-window.__app={Sem,setMode,KB,KB_VERSION};
+function showLoadError(text,retry){
+  const d=el("div","msg bot unsure"); d.appendChild(el("div","",text));
+  d.appendChild(el("div","small","المساعد شغال عادي بالفهم البسيط. ابعت الرسالة دي للمطوّر."));
+  chips(["حاول تاني"],d,()=>{d.remove();retry()}); thread.appendChild(d); scroll();
+}
+window.__app={Sem,setMode,KB,KB_VERSION,showLoadError};
 if(location.protocol.startsWith("http")&&"serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 
 <script type="module">
 /* تحميل موديل فهم المعنى (أول مرة محتاج نت ~120 ميجا، وبعدها من الكاش) */
-const {Sem,setMode,KB,KB_VERSION}=window.__app;
+const {Sem,setMode,KB,KB_VERSION,showLoadError}=window.__app;
 const MODEL="Xenova/paraphrase-multilingual-MiniLM-L12-v2";
-const LIB="https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/dist/transformers.web.min.js";
+const LIBS=["https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/dist/transformers.web.min.js","https://unpkg.com/@huggingface/transformers@4.3.0/dist/transformers.web.min.js"];
 
 function toB64(f32){const u=new Uint8Array(f32.buffer);let s="";for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
 function fromB64(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return new Float32Array(u.buffer)}
 
-(async()=>{
+let step="";
+async function loadLib(){
+  for(const url of LIBS){ try{ return await import(url); }catch(e){ console.warn("lib",url,e); } }
+  throw new Error("مقدرتش أحمّل مكتبة الموديل");
+}
+async function start(){
   try{
-    setMode("loading","بيجهّز الفهم الذكي…");
-    const {pipeline,env}=await import(LIB);
+    step="المكتبة"; setMode("loading","بيجهّز الفهم الذكي…");
+    const {pipeline,env}=await loadLib();
     env.allowLocalModels=false;
     const files={};
-    const ext=await pipeline("feature-extraction",MODEL,{dtype:"q8",device:"wasm",progress_callback:p=>{
-      if(p.status==="progress"&&p.total){files[p.file]=[p.loaded,p.total];let L=0,T=0;for(const [l,t] of Object.values(files)){L+=l;T+=t}
-        setMode("loading",`بينزّل الفهم الذكي ${Math.round(L/T*100)}٪ (أول مرة بس)`);}
-    }});
+    const progress=p=>{ if(p.status==="progress"&&p.total){files[p.file]=[p.loaded,p.total];let L=0,T=0;for(const [l,t] of Object.values(files)){L+=l;T+=t}
+        setMode("loading",`بينزّل الفهم الذكي ${Math.round(L/T*100)}٪ (أول مرة بس)`);} };
+    step="الموديل";
+    let ext;
+    try{ ext=await pipeline("feature-extraction",MODEL,{dtype:"q8",device:"wasm",progress_callback:progress}); }
+    catch(e1){ console.warn("wasm",e1); ext=await pipeline("feature-extraction",MODEL,{dtype:"q8",progress_callback:progress}); }
+    step="التجربة";
     const embedMany=async texts=>{const out=await ext(texts,{pooling:"mean",normalize:true});const [n,d]=out.dims;const data=out.data;const r=[];for(let i=0;i<n;i++)r.push(Float32Array.from(data.subarray(i*d,(i+1)*d)));return r};
     Sem.embed=async t=>(await embedMany([t]))[0];
+    await Sem.embed("تجربة");
 
-    // معاني الأسئلة: من الكاش لو موجودة، وإلا تتحسب مرة واحدة
+    step="المذاكرة";
     const key="emb:"+KB_VERSION+":"+MODEL;
     let cached=null; try{cached=JSON.parse(localStorage.getItem(key)||"null")}catch(e){}
     if(cached){ for(const [id,arr] of Object.entries(cached)) Sem.vecs.set(id,arr.map(fromB64)); }
@@ -335,7 +349,7 @@ function fromB64(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.l
         const vs=await embedMany(texts); Sem.vecs.set(e.id,vs); store[e.id]=vs.map(toB64);
         done++; setMode("loading",`بيذاكر المعلومات ${Math.round(done/KB.length*100)}٪`);
       }
-      try{ for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith("emb:"))localStorage.removeItem(k)} localStorage.setItem(key,JSON.stringify(store)); }catch(e){}
+      try{ for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith("emb:"))localStorage.removeItem(k)} localStorage.setItem(key,JSON.stringify(store)); }catch(e){}
     }
     let learned=[]; try{learned=JSON.parse(localStorage.getItem("learned")||"[]")}catch(e){}
     for(let i=0;i<learned.length;i++){ Sem.vecs.set("L"+i,[await Sem.embed(learned[i].q)]); }
@@ -343,9 +357,12 @@ function fromB64(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.l
     setMode("smart","الفهم الذكي شغال");
   }catch(err){
     console.warn(err);
-    setMode("","الفهم البسيط (الذكي محتاج نت أول مرة)");
+    const msg=(err&&(err.message||String(err))||"خطأ غير معروف").slice(0,300);
+    setMode("","الفهم البسيط (الذكي ما اشتغلش)");
+    showLoadError(`الفهم الذكي ما اشتغلش.\nالمرحلة: ${step}\nالسبب: ${msg}`, start);
   }
-})();
+}
+start();
 </script>
 </body>
 </html>
