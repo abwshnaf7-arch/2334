@@ -1,0 +1,67 @@
+<meta charset="utf-8">
+<title>collage-money</title>
+<style>
+@font-face{font-family:'Fatimah Arabic ITF';src:url('fonts/FatimahArabicITF-Black.otf') format('opentype')}
+html,body{margin:0;background:#d9d6d0}
+#screen{position:fixed;inset:0;overflow:hidden;background:#d9d6d0}
+#stage{position:absolute;left:0;top:0;width:1666px;height:926px;transform-origin:0 0;direction:rtl;font-family:'Fatimah Arabic ITF','Cairo',sans-serif;--ink:#171310}
+#cam{position:absolute;left:0;top:0;width:1666px;height:926px;transform-origin:0 0}
+#bg{position:absolute;left:-2100px;top:-2100px;width:5900px;height:5900px;background-image:linear-gradient(rgba(120,115,105,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(120,115,105,.16) 1px,transparent 1px);background-size:42px 42px}
+.a{position:absolute;opacity:0}
+.lbl{text-align:center;font-size:64px;line-height:1;color:var(--ink);white-space:nowrap}
+.hl{background:linear-gradient(transparent 18%,rgba(245,216,46,.9) 18%,rgba(245,216,46,.9) 90%,transparent 90%);background-repeat:no-repeat;background-size:0% 100%;padding:0 18px}
+.stk{display:block;width:100%;height:auto;filter:drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 10px 14px rgba(40,30,20,.4))}
+svg{position:absolute;overflow:visible}
+</style>
+<div id="screen"><div id="stage"><div id="cam"><div id="bg"></div></div></div></div>
+<script>
+var DUR=6, stage=document.getElementById('stage'), cam=document.getElementById('cam'), screenEl=document.getElementById('screen'), NS='http://www.w3.org/2000/svg', items=[];
+function clamp(x){return x<0?0:x>1?1:x}
+function bez(x1,y1,x2,y2){function f(t,a,b){return 3*a*(1-t)*(1-t)*t+3*b*(1-t)*t*t+t*t*t}
+ return function(x){if(x<=0)return 0;if(x>=1)return 1;var lo=0,hi=1,t=x;for(var i=0;i<30;i++){t=(lo+hi)/2;if(f(t,x1,x2)<x)lo=t;else hi=t}return f(t,y1,y2)}}
+var EASE=bez(.15,0,.5,1);
+function backOut(x){var c=1.70158;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)}
+function cubic(x){return 1-Math.pow(1-x,3)}
+var FX={
+ pop:function(el,p){var e=backOut(p);el.style.opacity=clamp(p*3);el.style.filter=p<1?'blur('+((1-p)*(1-p)*5)+'px)':'';el.style.transform='translateY('+((1-e)*36)+'px) scale('+(0.85+0.15*e)+')'},
+ draw:function(el,p){el.style.opacity=p>0?1:0;var ps=el.querySelectorAll('path'),n=ps.length;ps.forEach(function(pa,i){var q=n>1?(i==0?clamp(p/.7):clamp((p-.7)/.3)):p;pa.style.strokeDashoffset=1-q})},
+ mark:function(el,p){el.style.backgroundSize=(cubic(p)*100)+'% 100%'}
+};
+function add(el,t,d,fx){items.push({el:el,t:t,d:d,fx:fx})}
+function mk(tag,cls,html,css){var e=document.createElement(tag);e.className=cls;e.innerHTML=html||'';e.style.cssText=css||'';cam.appendChild(e);return e}
+function svg(css,vb,inner){var s=document.createElementNS(NS,'svg');s.setAttribute('class','a');s.style.cssText=css;s.setAttribute('viewBox',vb);s.innerHTML=inner;cam.appendChild(s);return s}
+function scribble(x,y,w){return svg('left:'+x+'px;top:'+y+'px;width:'+w+'px;height:30px','0 0 280 30','<path pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1" d="M4 20 C40 6 70 26 110 14 S190 24 276 8" stroke="#d8334a" stroke-width="5" stroke-linecap="round" fill="none"/><path pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1" d="M30 26 C80 16 140 28 220 18" stroke="#d8334a" stroke-width="3" stroke-linecap="round" fill="none"/>')}
+function arrow(cx,y){return svg('left:'+(cx-35)+'px;top:'+y+'px;width:70px;height:91px','0 0 100 130','<path pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1" d="M50 2 C46 40 54 70 50 118" stroke="#171310" stroke-width="5" stroke-linecap="round" fill="none"/><path pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1" d="M22 88 L50 120 L78 86" stroke="#171310" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>')}
+function equal(cx,cy){return svg('left:'+(cx-95)+'px;top:'+(cy-60)+'px;width:190px;height:120px','0 0 190 120','<path pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1" d="M10 34 C60 22 120 42 180 28" stroke="#e11d1d" stroke-width="16" stroke-linecap="round" fill="none"/><path pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1" d="M14 88 C70 76 120 96 176 82" stroke="#e11d1d" stroke-width="16" stroke-linecap="round" fill="none"/>')}
+
+/* ---- content: ربط العملة المصرية بالعملة الأجنبية بحيث أن العملتين والاقتصادين يبقوا واحد ---- */
+var AX=1330, BX=420;
+/* A: ربط العملة المصرية */
+var tape=mk('div','a','<img src="assets/tape.png" style="display:block;width:100%;height:100%;filter:drop-shadow(0 5px 8px rgba(0,0,0,.4))"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:40px;color:#141414">ربط</div>','left:'+(AX-110)+'px;top:40px;width:220px;height:56px');add(tape,0.15,.5,FX.pop);
+var la=mk('div','a lbl','العملة المصرية','left:'+(AX-200)+'px;top:125px;width:400px');add(la,0.55,.5,FX.pop);
+var sa=scribble(AX-140,196,280);add(sa,0.95,.5,FX.draw);
+var aa=arrow(AX,232);add(aa,1.15,.5,FX.draw);
+var coin=mk('div','a','<img class="stk" src="assets/coin_egypt.png">','left:'+(AX-200)+'px;top:300px;width:400px');add(coin,1.2,.7,FX.pop);
+/* B: بالعملة الأجنبية */
+var lb=mk('div','a lbl','بالعملة الأجنبية','left:'+(BX-200)+'px;top:125px;width:400px');add(lb,2.15,.5,FX.pop);
+var sb=scribble(BX-140,196,280);add(sb,2.5,.5,FX.draw);
+var ab=arrow(BX,232);add(ab,2.7,.5,FX.draw);
+var uk=mk('div','a','<img class="stk" src="assets/money_uk.png">','left:'+(BX-280)+'px;top:369px;width:560px');add(uk,2.75,.7,FX.pop);
+/* C: بحيث أن العملتين والاقتصادين يبقوا واحد */
+var eq=equal(915,520);add(eq,4.1,.6,FX.draw);
+var t1=mk('div','a lbl','العملتين والاقتصادين','left:'+(850-420)+'px;top:742px;width:840px;font-size:58px');add(t1,4.0,.5,FX.pop);
+var t2=mk('div','a lbl','<span class="hl" id="hl">يبقوا واحد</span>','left:'+(850-420)+'px;top:812px;width:840px;font-size:76px');add(t2,4.45,.5,FX.pop);
+add(document.getElementById('hl'),4.9,.7,FX.mark);
+
+/* ---- camera ---- */
+var K=1.35,CYA=370,KEYS=[[0,850,475,1],[0.25,850,475,1],[1.45,AX,CYA,K],[1.7,AX,CYA,K],[3.1,BX,CYA,K],[3.5,BX,CYA,K],[5.2,850,475,1],[6,850,475,1]];
+function camAt(t){for(var i=0;i<KEYS.length-1;i++){var a=KEYS[i],b=KEYS[i+1];if(t<=b[0]||i==KEYS.length-2){var m=EASE(clamp((t-a[0])/(b[0]-a[0])));return [a[1]+(b[1]-a[1])*m,a[2]+(b[2]-a[2])*m,a[3]+(b[3]-a[3])*m]}}}
+function applyCam(t){var c=camAt(t),c2=camAt(Math.min(DUR,t+.03));
+ cam.style.transform='translate('+(833-c[2]*c[0])+'px,'+(463-c[2]*c[1])+'px) scale('+c[2]+')';
+ var vx=(c2[0]*c2[2]-c[0]*c[2])/.03,vy=(c2[1]*c2[2]-c[1]*c[2])/.03,vz=(c2[2]-c[2])/.03*500;
+ var bl=Math.min(2.5,Math.sqrt(vx*vx+vy*vy+vz*vz)/900);cam.style.filter=bl>.4?'blur('+bl.toFixed(2)+'px)':''}
+window.setT=function(t){applyCam(t);items.forEach(function(it){it.fx(it.el,clamp((t-it.t)/it.d))})};
+function fit(){stage.style.transform='scale('+(screenEl.clientWidth/1666)+')'}
+window.addEventListener('resize',fit);fit();
+document.fonts.load('60px "Fatimah Arabic ITF"').then(function(){return document.fonts.ready}).then(function(){document.title='ready';window.setT(0)});
+</script>
