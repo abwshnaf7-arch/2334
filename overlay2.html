@@ -55,6 +55,23 @@ function circled(text,cx,cy,size,tin,tout){
  s.innerHTML='<path pathLength="1" d="'+ell(rx,ry,-.012,0,2)+'" fill="none" stroke="#e01b1b" stroke-width="5" stroke-linecap="round" style="stroke-dasharray:1;stroke-dashoffset:1"/><path pathLength="1" d="'+ell(rx*.985,ry*1.05,.01,4,-3)+'" fill="none" stroke="#e01b1b" stroke-width="3.5" stroke-linecap="round" style="stroke-dasharray:1;stroke-dashoffset:1"/>';
  st.appendChild(s);G.push({e:s,a:tin+.3,b:tout,draw:true,fx:0,fy:0,rot:0,ph:0});
  return e}
+
+function tapeimg(text,x,y,w,size){
+ var h=w*127/496;
+ var g=el('g','','left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px');
+ el('', '<img src="assets/tape.png" style="display:block;width:100%;height:100%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4))">','position:absolute;left:0;top:0;width:100%;height:100%',g);
+ var t=el('','','position:absolute;left:9%;top:0;width:82%;height:100%;display:flex;align-items:center;justify-content:center;color:#141414;white-space:nowrap;font-size:'+size+'px',g);
+ t.textContent=text;fit(t,w*.82,size);return g}
+function pagePerson(src,x,y,w,dir){
+ var ph=w*550/431;
+ var o=el('g','','left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+ph+'px;perspective:1800px');
+ var pg=el('','','position:absolute;left:0;top:0;width:'+w+'px;height:'+ph+'px;transform-origin:'+(dir>0?'left':'right')+' center;backface-visibility:hidden',o);
+ pg.className='pg';
+ pg.innerHTML='<img src="assets/paper.png" style="position:absolute;left:0;top:0;width:100%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))">'+
+  '<img src="'+src+'" style="position:absolute;left:14%;top:8.5%;width:76%;height:84%;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,.4)">'+
+  '<div class="shade" style="position:absolute;left:0;top:0;width:100%;height:100%;background:linear-gradient('+(dir>0?'90deg':'270deg')+',rgba(0,0,0,.85),rgba(0,0,0,0));opacity:0"></div>';
+ return o}
+function addTurn(e,a,b,dir){G.push({e:e,a:a,b:b,turn:dir,fx:0,fy:0,rot:0,ph:0})}
 var CARD='assets/index_card.webp',BAN='assets/paper_banner.webp';
 function wavy(x,y,w,h,tin,tout){var s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('class','g');s.style.cssText='left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px';s.setAttribute('viewBox','0 0 '+w+' '+h);
  s.innerHTML='<path pathLength="1" d="M'+w/2+' 0 C'+(w*.1)+' '+h*.25+' '+(w*.9)+' '+h*.5+' '+w/2+' '+h*.75+' S'+(w*.5)+' '+h*.95+' '+w/2+' '+h+'" fill="none" stroke="#ea1717" stroke-width="12" stroke-linecap="round" style="stroke-dasharray:1;stroke-dashoffset:1"/>';
@@ -72,18 +89,21 @@ add(bars(['نتمسك','بالهوية الإسلامية'],60,380,78),0.15,4-o,
 /* 2: 4-6  الهوية؟ */
 add(circled('الهوية؟',960,890,112,4.1,6-o),4.1,6-o,0);
 /* 3: 6-10  كفاية استعمار / نعمل استقلال */
-add(tape('كفاية استعمار',1360,330,520,120,74),6.1,10-o,200);
-add(tape('نعمل استقلال',1360,480,520,120,74),7.8,10-o,200);
+add(tapeimg('كفاية استعمار',1340,300,540,84),6.1,10-o,200);
+add(tapeimg('نعمل استقلال',1340,450,540,84),7.8,10-o,200);
 /* 4: 10-12  التيار التاني بقى خطير (left: face is on the right) */
 add(card('التيار التاني<br>بقى خطير',100,300,520,0,CARD,[10,14,80,58]),10.1,12-o,-200);
 /* 5: 12-15  التيار الليبرالي أو الديمقراطي */
 add(bars(['التيار الليبرالي','أو الديمقراطي'],60,380,78),12.1,15-o,200);
-/* 6: 15-20  أحمد لطفي السيد / رفاعة الطهطاوي */
-add(card('أحمد لطفي<br>السيد',1330,300,500,0,CARD,[10,14,80,58]),15.3,END-.2,260);
-add(card('رفاعة<br>الطهطاوي',90,300,500,0,CARD,[10,14,80,58]),17.0,END-.2,-260);
+/* 6: 15-20  أحمد لطفي السيد (يمين) / رفاعة الطهطاوي (شمال) - portraits, page turn */
+addTurn(pagePerson('assets/lutfi.jpg',1440,250,390,1),15.3,END-.6,1);
+addTurn(pagePerson('assets/tahtawi.jpg',90,250,390,-1),17.0,END-.6,-1);
 }
 window.setT=function(t){
  G.forEach(function(g){
+  if(g.turn){var ti=EI(clamp((t-g.a)/.85)),to=EO(clamp((t-g.b)/.5)),ang=((1-ti)+to)*92*g.turn;
+    var pgx=g.e.firstChild;pgx.style.transform='rotateY('+ang+'deg)';pgx.querySelector('.shade').style.opacity=Math.min(1,Math.abs(ang)/80);
+    g.e.style.opacity=(t>=g.a&&t<g.b+.52&&Math.abs(ang)<91)?1:0;return}
   var pi=EI(clamp((t-g.a)/.6)),po=EO(clamp((t-g.b)/.35));
   var vis=t>=g.a&&t<g.b+.36;
   if(g.draw){var p=EI(clamp((t-g.a)/.5)),ps=g.e.querySelectorAll('path'),n=ps.length;
