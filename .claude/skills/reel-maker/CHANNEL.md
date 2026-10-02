@@ -17,7 +17,7 @@ Why not one repo: Gemini's login is `sdfbs` which has no write access to `abwshn
 1. Claude writes `comms/to-gemini/NNN-*.md` (see `gemini/asset-request-template.md`), commits, pushes, tells the owner to paste `gemini/onboarding-message.md` (filled) to Gemini ONCE if Gemini seems to have forgotten (otherwise just "اقرا الرسالة NNN").
 2. Gemini pulls, does the work, pushes assets + `comms/to-claude/NNN-reply.md`, tells the owner "خلصت".
 3. Owner says "كمل". Claude runs `git -C /home/user/assets-repo pull`, reads the reply, LOOKS at every asset (images/frames) to verify, then builds.
-4. Repeat with NNN+1. Numbers so far: 001 setup/assets, 002 autonomous mode, 003 VO transcription (words.json still pending), 004 capture-method docs + generalized capture tool + fixed ui_09 + Arabic re-capture.
+4. Repeat with NNN+1. Numbers so far: 001 setup/assets, 002 autonomous mode, 003 VO transcription (words.json still pending), 004 capture-method docs + generalized capture tool + fixed ui_09, 005 VO file + doc fixes, 006 ping test (passed), 007 ui_01..08 regression (Gemini's commit e00504e broke them), 008 feature facts + native-vs-extension tests.
 
 ## Troubleshooting
 - Gemini says push is 403 / "denied to sdfbs": he is pushing to the wrong repo. He must push to `sdfbs/happyduck-assets`.
