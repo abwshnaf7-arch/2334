@@ -24,7 +24,7 @@ body{background:var(--page);color:var(--page-ink);font-family:var(--font-body);p
 #render-mode .bar{display:none}
 #stage *{box-sizing:border-box}
 .abs{position:absolute;opacity:0}
-.tape{left:633px;top:56px;width:400px;height:96px;background:var(--tape);transform:rotate(-1deg);display:flex;align-items:center;justify-content:center;
+.tape{left:810px;top:949px;width:400px;height:96px;background:var(--tape);transform:rotate(-1deg);display:flex;align-items:center;justify-content:center;
   font-family:var(--font-display);font-size:74px;color:var(--ink);box-shadow:0 3px 8px rgba(0,0,0,.18);
   clip-path:polygon(0 4%,3% 0,6% 5%,94% 0,97% 6%,100% 2%,100% 96%,97% 100%,94% 94%,6% 100%,3% 95%,0 100%)}
 .sub{left:333px;width:1000px;top:166px;text-align:center;font-family:var(--font-body);font-weight:800;font-size:34px;color:var(--sepia-d)}
@@ -137,11 +137,11 @@ var CLS=[
  {n:'الطبقة الثالثة',h:'الحرفيون',l:['صغار التجار','صغار ملاك الأرض'],f:[{k:'craft',x:6,s:.7},{k:'shop',x:96,s:.7},{k:'owner',x:186,s:.7},{k:'craft',x:276,s:.66}]},
  {n:'الطبقة الرابعة',h:'المزارعون والعمال',l:['غالبية الشعب'],f:[{k:'farmer',x:2,s:.6},{k:'farmerw',x:60,s:.56},{k:'worker',x:116,s:.6},{k:'child',x:170,s:.36},{k:'farmer2',x:200,s:.6},{k:'farmerw',x:256,s:.56},{k:'farmer',x:304,s:.58}]}
 ];
-var T0=2.0, STEP=4.5, CX=[1428,1058,688,318], CAMX=[1428,1058,688,310], hlEl;
+var T0=2.0, STEP=4.5, CX=[1560,460,1560,460], ROW=[0,0,900,900], CAMX=[1560,460,1560,445], hlEl;
 var PH=[{src:'assets/c1.png',w:318,h:380,x:26},{src:'assets/c2.png',w:360,h:348,x:5},{src:'assets/c3.png',w:360,h:313,x:5},{src:'assets/c4.png',w:500,h:286,x:-80}];
 CLS.forEach(function(c,i){
   var s=T0+i*STEP;
-  var col=mk('div','col','');col.style.left=(CX[i]-185)+'px';
+  var col=mk('div','col','');col.style.left=(CX[i]-185)+'px';col.style.top=ROW[i]+'px';
   var lbl=mk('div','lbl','<span>'+c.n+'</span>',col);
   col.insertAdjacentHTML('beforeend',scribble());var scr=col.lastChild;
   col.insertAdjacentHTML('beforeend',arrow(i%2?-6:6));var arr=col.lastChild;
@@ -163,10 +163,10 @@ var cam=document.createElement('div');cam.id='cam';
 var bg=document.createElement('div');bg.id='bg';cam.appendChild(bg);
 while(stage.firstChild)cam.appendChild(stage.firstChild);stage.appendChild(cam);
 cam.insertBefore(bg,cam.firstChild);
-var CY=548,K=1.25,EASE=bez(.15,0,.5,1);
-var KEYS=[[0,833,463,1],[1.3,833,463,1]];
-for(var i=0;i<4;i++){var a=T0+i*STEP;KEYS.push([a+1.0,CAMX[i],CY,K]);KEYS.push([a+STEP-0.7,CAMX[i],CY,K])}
-KEYS.pop();KEYS.push([19.4,CAMX[3],CY,K]);KEYS.push([21.4,833,463,1]);KEYS.push([22,833,463,1]);
+var CY=548,K=1.25,KW=.53,WX=1010,WY=997,EASE=bez(.15,0,.5,1);
+var KEYS=[[0,WX,WY,KW],[1.0,WX,WY,KW]];
+for(var i=0;i<4;i++){var a=T0+i*STEP;KEYS.push([a+1.0,CAMX[i],CY+ROW[i],K]);KEYS.push([a+STEP-1.0,CAMX[i],CY+ROW[i],K])}
+KEYS.pop();KEYS.push([19.0,CAMX[3],CY+ROW[3],K]);KEYS.push([21.4,WX,WY,KW]);KEYS.push([22,WX,WY,KW]);
 function bez(x1,y1,x2,y2){
   function f(t,a,b){return 3*a*(1-t)*(1-t)*t+3*b*(1-t)*t*t+t*t*t}
   return function(x){if(x<=0)return 0;if(x>=1)return 1;var lo=0,hi=1,t=x;
