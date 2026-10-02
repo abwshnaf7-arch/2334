@@ -1,6 +1,6 @@
 // يخلي المساعد يشتغل من غير نت بعد أول فتحة
-const CACHE = "farawla-v1";
-const CORE = ["./", "index.html", "kb.js", "manifest.json", "icon-192.png", "icon-512.png"];
+const CACHE = "farawla-v2";
+const CORE = ["index.html", "kb.js", "manifest.json", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));

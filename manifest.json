@@ -4,7 +4,7 @@
   "description": "أسئلة وإجابات عن زراعة الفراولة في مصر، شغال من غير نت",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "./",
+  "start_url": "index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f3f1ee",
