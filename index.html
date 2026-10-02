@@ -311,7 +311,7 @@ if(location.protocol.startsWith("http")&&"serviceWorker" in navigator) navigator
 /* تحميل موديل فهم المعنى (أول مرة محتاج نت ~120 ميجا، وبعدها من الكاش) */
 const {Sem,setMode,KB,KB_VERSION,showLoadError}=window.__app;
 const MODEL="Xenova/paraphrase-multilingual-MiniLM-L12-v2";
-const LIBS=["https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/dist/transformers.web.min.js","https://unpkg.com/@huggingface/transformers@4.3.0/dist/transformers.web.min.js"];
+const LIBS=["https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/dist/transformers.min.js","https://unpkg.com/@huggingface/transformers@4.3.0/dist/transformers.min.js"];
 
 function toB64(f32){const u=new Uint8Array(f32.buffer);let s="";for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
 function fromB64(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return new Float32Array(u.buffer)}

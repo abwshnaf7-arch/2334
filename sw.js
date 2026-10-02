@@ -1,5 +1,5 @@
 // يخلي المساعد يشتغل من غير نت بعد أول فتحة
-const CACHE = "farawla-v4";
+const CACHE = "farawla-v5";
 const CORE = ["index.html", "kb.js", "manifest.json", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
