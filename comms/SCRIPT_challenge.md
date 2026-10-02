@@ -5,14 +5,15 @@ Status: DRAFT. Placeholders [X] and [Y] are filled ONLY with the honest stopwatc
 01_hook (~3s):
 مونتير بيقص بإيده... ضد زرار واحد. مين هيخلّص الأول؟
 
-02_rules (~5s):
-نفس الفيديو، ونفس الشروط: نشيل السكتات والتكرار، ونكتب كابشن لكل كلمة.
+02_rules (~4s):
+نفس الفيديو، ونفس الشروط: نشيل السكتات والتكرار، ونكتب الكابشن.
 
 03_manual (~6s):
 الأول، المونتاج اليدوي في بريمير. قص، ومسح، وكتابة... والعدّاد شغال. وخلّص في [X].
 
-04_extension (~8s):
-دلوقتي نفس الفيديو مع Happy Duck AI. نختار الكليب، قص وتنقية، وبعدها إنشاء الكابشن. وخلّص في [Y]!
+04_extension (~10s):
+دلوقتي نفس الفيديو مع Happy Duck AI. قص وتنقية... وهو بيسألك الأول: تمسح الجمل المكررة دي؟ تراجع وتوافق، وبعدها إنشاء الكابشن. وخلّص في [Y]!
+(the "asks you first" line is the NEW review-window feature: repeated sentences are deleted only after the user reviews them; confirm exact behavior in message 012 facts before recording the voice.)
 
 05_result (~4s):
 [X] ضد [Y]... ونفس النتيجة.
@@ -31,7 +32,7 @@ Status: DRAFT. Placeholders [X] and [Y] are filled ONLY with the honest stopwatc
 1. 0-3s Hook: split screen, two big stopwatches at 00:00 (graphic frame); real clip thumbnails of both takes.
 2. 3-8s Rules: graphic checklist icons over the REAL raw-clip waveform in Premiere (silences and repeats highlighted on the real timeline still).
 3. 8-14s Manual: real Take A recording (8x timelapse with the real stopwatch) + 1-2 real-speed excerpts (razor cuts, typing captions). Stopwatch stops on [X].
-4. 14-22s Extension: real Take B recording of the real plugin panel (Smart Cut: analyze, Cut & Clean, review window; Caption: Generate Caption), real stopwatch. Stops on [Y].
+4. 14-22s Extension: real Take B recording of the real plugin panel (Smart Cut: analyze, Cut & Clean, the REVIEW WINDOW with real screenshots from message 012, confirm; Caption: Generate Caption), real stopwatch. Stops on [Y].
 5. 22-26s Result: real before/after Premiere timeline stills side by side + the two real finals playing together.
 6. 26-30s CTA: logo, happyduckai.com, link-in-bio (graphics), karaoke captions throughout (as in reel 1).
 
