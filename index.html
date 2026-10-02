@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#c2263f">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>مساعد الفراولة</title>
+<style>
+/* Layout: one-screen chat app — header with understanding-mode pill, scrolling thread, composer pinned at bottom */
+:root{
+  --bg:#f3f1ee; --surface:#ffffff; --ink:#1d1a19; --muted:#6c6460; --line:#e2dcd7;
+  --berry:#c2263f; --berry-ink:#ffffff; --leaf:#2f6b3a; --leaf-soft:#e6efe7; --warn:#9a4a12; --warn-soft:#f7ebe1;
+  --font:"Segoe UI",Tahoma,"Noto Sans Arabic","Geeza Pro",Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141211; --surface:#1e1b1a; --ink:#efe9e5; --muted:#a59d98; --line:#302b29;
+  --berry:#e2546b; --berry-ink:#1a0d10; --leaf:#7cc28a; --leaf-soft:#1f2d22; --warn:#e8a06a; --warn-soft:#2c2018; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141211; --surface:#1e1b1a; --ink:#efe9e5; --muted:#a59d98; --line:#302b29;
+  --berry:#e2546b; --berry-ink:#1a0d10; --leaf:#7cc28a; --leaf-soft:#1f2d22; --warn:#e8a06a; --warn-soft:#2c2018; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.75;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.app{height:100%;display:flex;flex-direction:column;max-width:760px;margin-inline:auto}
+header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.logo{width:40px;height:40px;flex:none}
+.ht{flex:1;min-width:0}
+h1{margin:0;font-size:19px;line-height:1.2}
+.mode{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.mode.smart .dot{background:var(--leaf)} .mode.smart{color:var(--leaf)}
+.mode.loading .dot{background:var(--warn);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.mode.loading .dot{animation:none}}
+.ghost{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:5px 9px;cursor:pointer;white-space:nowrap}
+.ghost .n{display:inline-block;min-width:18px;background:var(--warn);color:var(--berry-ink);border-radius:9px;padding:0 5px;font-size:11.5px;margin-inline-start:4px}
+#thread{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;padding:10px 14px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere;min-width:0}
+.me{align-self:flex-start;background:var(--berry);color:var(--berry-ink);border-start-start-radius:5px}
+.bot{align-self:flex-end;background:var(--surface);border:1px solid var(--line);border-start-end-radius:5px}
+.bot.unsure{border-color:var(--warn)}
+.tag{display:inline-block;font-size:12px;color:var(--leaf);background:var(--leaf-soft);border-radius:999px;padding:1px 9px;margin-bottom:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font:inherit;font-size:13.5px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer;text-align:start}
+.chip:hover,.chip:focus-visible{border-color:var(--berry)}
+.chip.teach{border-style:dashed;color:var(--leaf)}
+.small{font-size:12.5px;color:var(--muted)}
+.welcome{text-align:center;color:var(--muted);padding:18px 4px 4px}
+.welcome h2{color:var(--ink);font-size:22px;margin:0 0 4px;text-wrap:balance}
+.welcome .chips{justify-content:center}
+form{display:flex;gap:8px;align-items:flex-end;padding:10px 16px 12px;border-top:1px solid var(--line)}
+textarea{flex:1;min-width:0;resize:none;max-height:130px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:10px 12px;font:inherit;line-height:1.5}
+.send{font:inherit;font-weight:600;background:var(--berry);color:var(--berry-ink);border:0;border-radius:14px;padding:10px 18px;cursor:pointer}
+textarea:focus,button:focus-visible{outline:2px solid var(--berry);outline-offset:1px}
+.teachbox{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.panel{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 12px);gap:10px;z-index:5}
+.panel h2{margin:0;font-size:18px}
+.panel ol{flex:1;overflow-y:auto;margin:0;padding-inline-start:22px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding-block:10px}
+.panel li{padding:4px 6px}
+.panel .row{display:flex;gap:8px;flex-wrap:wrap}
+.panel textarea{flex:none;height:100px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <img class="logo" src="icon-192.png" alt="">
+    <div class="ht">
+      <h1>مساعد الفراولة</h1>
+      <div class="mode" id="mode"><span class="dot"></span><span id="modeText">الفهم البسيط</span></div>
+    </div>
+    <button class="ghost" id="missesBtn" type="button">ما فهمتهوش<span class="n" id="missN" hidden>0</span></button>
+    <button class="ghost" id="clear" type="button">جديد</button>
+  </header>
+  <div id="thread" aria-live="polite"></div>
+  <form id="form">
+    <textarea id="box" rows="1" placeholder="اسأل عن الفراولة بأي طريقة…"></textarea>
+    <button class="send" type="submit">إرسال</button>
+  </form>
+</div>
+
+<div class="panel" id="panel" hidden>
+  <h2>الأسئلة اللي ما فهمتهاش</h2>
+  <div class="small">ابعت القايمة دي للي بيطوّر المساعد عشان يضيف إجاباتها.</div>
+  <ol id="missList"></ol>
+  <textarea id="missText" readonly hidden></textarea>
+  <div class="row">
+    <button class="chip" id="copyMisses" type="button">نسخ القايمة</button>
+    <button class="chip" id="clearMisses" type="button">مسح القايمة</button>
+    <button class="chip" id="closePanel" type="button">رجوع</button>
+  </div>
+</div>
+
+<script src="kb.js"></script>
+<script>
+/* =====================================================================
+   المحرك البسيط (كلمات + مرادفات) — شغال دايماً، حتى من غير الموديل
+   ===================================================================== */
+const STOP = new Set(["في","من","على","علي","عن","الى","الي","ل","و","او","ده","دي","دا","اللي","هو","هي","انا","احنا","يا","ايه","اي","هل","طيب","طب","ليه","بقي","كده","كدا","عايز","عاوز","عايزه","ممكن","لو","بس","مع","بين","يعني","اعرف","قولي","قول","اسال","سؤال","ازاي","كيف","ما","ماهي","الفراوله","فراوله","الزرع","الزرعه","فيه","عندي","اعمل","بيعمل","بتعمل","حاجه","كل","قد"]);
+const AR_DIGITS={"٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9"};
+function norm(s){
+  return String(s).toLowerCase()
+    .replace(/[٠-٩]/g,d=>AR_DIGITS[d])
+    .replace(/[ً-ْٰـ]/g,"")
+    .replace(/[إأآٱ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي")
+    .replace(/ؤ/g,"و").replace(/ئ/g,"ي").replace(/ء/g,"")
+    .replace(/(.)\1{2,}/g,"$1")
+    .replace(/[،؛؟٪-٭۔]/g," ")
+    .replace(/[^؀-ۿa-z0-9.\s]/g," ")
+    .replace(/\s+/g," ").trim();
+}
+function stems(w){
+  const out=new Set([w]); let x=w;
+  if(/^(وال|بال|فال|كال)/.test(x)&&x.length>5) x=x.slice(3);
+  else if(/^لل/.test(x)&&x.length>4) x=x.slice(2);
+  else if(/^ال/.test(x)&&x.length>=4) x=x.slice(2);
+  else if(/^[وبفل]/.test(x)&&x.length>4) out.add(x.slice(1));
+  out.add(x);
+  if(/^(بت|بي|هت|هي)/.test(x)&&x.length>5) out.add(x.slice(2));
+  for(const suf of ["ات","ين","ون","ها","هم","ه"]) if(x.length>suf.length+2&&x.endsWith(suf)) out.add(x.slice(0,-suf.length));
+  return [...out];
+}
+const tokens=s=>norm(s).split(" ").filter(Boolean);
+function bigr(w){const a=[];for(let i=0;i<w.length-1;i++)a.push(w.slice(i,i+2));return a}
+function dice(a,b){if(a===b)return 1;if(a.length<3||b.length<3)return 0;const A=bigr(a),B=bigr(b);let m=0;const C=B.slice();for(const g of A){const i=C.indexOf(g);if(i>=0){m++;C.splice(i,1)}}return 2*m/(A.length+B.length)}
+
+const WORD2C=new Map();
+for(const [c,ws] of Object.entries(SYN)) for(const w of ws){const n=norm(w);if(!WORD2C.has(n))WORD2C.set(n,new Set());WORD2C.get(n).add(c)}
+const VOCAB=[...WORD2C.keys()];
+const WEAK=new Set(["PLANT","COUNT","DIFF","TREAT","TIME"]);
+
+function analyze(text){
+  const concepts=new Set(),words=new Set();
+  for(const t of tokens(text)){
+    if(STOP.has(t)) continue;
+    let hit=false;
+    for(const s of stems(t)){ if(STOP.has(s)) continue; words.add(s); if(WORD2C.has(s)){WORD2C.get(s).forEach(c=>concepts.add(c));hit=true} }
+    if(!hit&&t.length>=4){let best=null,bs=0;for(const v of VOCAB){const d=dice(t,v);if(d>bs){bs=d;best=v}} if(bs>=0.75){WORD2C.get(best).forEach(c=>concepts.add(c));words.add(best)}}
+  }
+  return {concepts,words,raw:norm(text)};
+}
+// كلمات أمثلة الأسئلة لكل إجابة
+function entryWords(e){ if(!e._w){ e._w=new Set(); for(const q of [...(e.q||[]),e.t||""]) for(const t of tokens(q)) if(!STOP.has(t)) stems(t).forEach(s=>{if(!STOP.has(s))e._w.add(s)}); } return e._w; }
+function kwScore(e,q){
+  let s=0;
+  for(const c of e.c) if(q.concepts.has(c)) s+=WEAK.has(c)?1:3;
+  if(q.concepts.has(e.c[0])&&!WEAK.has(e.c[0])) s+=1;
+  for(const k of e.k){const n=norm(k);for(const w of q.words){if(w===n||(n.length>3&&dice(w,n)>=0.8)){s+=3;break}}}
+  const ew=entryWords(e); let ov=0; for(const w of q.words) if(ew.has(w)) ov++; s+=Math.min(ov,4);
+  s-=e.c.filter(c=>!q.concepts.has(c)&&!WEAK.has(c)).length*0.5;
+  return s;
+}
+
+/* =====================================================================
+   حسبة المساحة
+   ===================================================================== */
+const UNITS=[
+  {re:/(\d+(?:\.\d+)?)\s*(فدان|فدادين|افدنه)/,f:1,name:"فدان"},
+  {re:/(\d+(?:\.\d+)?)\s*(قيراط|قراريط)/,f:1/24,name:"قيراط"},
+  {re:/(\d+(?:\.\d+)?)\s*(متر|م2)/,f:1/4200,name:"متر"},
+];
+const WORDNUM=[["فدانين",2,"فدانين"],["قيراطين",2/24,"قيراطين"],["نص فدان",0.5,"نص فدان"],["ربع فدان",0.25,"ربع فدان"],["تلت فدان",1/3,"تلت فدان"]];
+function area(raw){
+  for(const [k,v,l] of WORDNUM) if(raw.includes(k)) return {feddan:v,label:l};
+  for(const u of UNITS){const m=raw.match(u.re);if(m)return {feddan:parseFloat(m[1])*u.f,label:m[1]+" "+u.name}}
+  return null;
+}
+const fmt=n=>Math.round(n).toLocaleString("ar-EG"), fmt1=n=>(Math.round(n*10)/10).toLocaleString("ar-EG");
+function calc(q){
+  const a=area(q.raw); if(!a) return null;
+  const F=a.feddan,C=q.concepts;
+  const wY=C.has("YIELD")||C.has("PROFIT"), wC=C.has("COST"), wP=C.has("TRANSPLANT")||(!wY&&!wC&&C.has("COUNT"));
+  if(!wY&&!wC&&!wP) return {t:"تحويل مساحة",a:`${a.label} = حوالي ${fmt(F*4200)} متر مربع = ${fmt1(F*24)} قيراط.`};
+  const L=[`حسبة تقريبية لـ ${a.label} (حوالي ${fmt(F*4200)} م²):`];
+  if(wP) L.push(`• الشتلات: من ${fmt(F*30000)} لـ ${fmt(F*40000)} شتلة.`);
+  if(wY) L.push(`• الإنتاج المتوقع: من ${fmt1(F*18)} لـ ${fmt1(F*25)} طن في المتوسط، ولحد ${fmt1(F*30)} طن في موسم ممتاز.`);
+  if(wC) L.push(`• التكلفة: فيه تقارير من مواسم سابقة قدّرت الفدان بحوالي 130 ألف جنيه، يعني حوالي ${fmt(F*130000)} جنيه لمساحتك، والرقم الحقيقي النهارده غالباً أعلى.`);
+  return {t:"حسبة",a:L.join("\n")};
+}
+
+/* =====================================================================
+   فهم المعنى (الموديل) — بيتحمّل في الخلفية
+   ===================================================================== */
+const SEM_SURE=0.55, SEM_MAYBE=0.45;   // حدود الثقة — ممكن تتظبط بعد التجربة
+const Sem={ready:false, embed:null, vecs:new Map()};
+function dot(a,b){let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s}
+function semScore(e,qv){const vs=Sem.vecs.get(e.id);if(!vs)return 0;let m=0;for(const v of vs){const d=dot(v,qv);if(d>m)m=d}return m}
+
+/* =====================================================================
+   العقل
+   ===================================================================== */
+let learned=[]; try{learned=JSON.parse(localStorage.getItem("learned")||"[]")}catch(e){}
+const allKB=()=>[...KB,...learned.map((l,i)=>({id:"L"+i,t:"من اللي علّمتهولي",c:[...analyze(l.q).concepts],k:[],q:[l.q],a:l.a,n:[],learned:true}))];
+const ctx={last:null};
+
+async function think(text){
+  const kb=allKB(), q=analyze(text);
+  const c=calc(q); if(c) return {type:"answer",t:c.t,a:c.a,n:["الإنتاجية كام؟","التكلفة كام؟"]};
+  const content=tokens(text).filter(t=>!STOP.has(t));
+  const followUp=ctx.last && content.length<=3 && [...q.concepts].every(x=>WEAK.has(x));  // سؤال قصير ملوش موضوع خاص بيه
+
+  let qv=null, qv2=null;
+  if(Sem.ready){ try{ qv=await Sem.embed(text); if(followUp) qv2=await Sem.embed(ctx.last.t+" "+text); }catch(e){} }
+  const kq2=followUp?{concepts:new Set([...q.concepts,...ctx.last.c]),words:q.words,raw:q.raw}:null;
+
+  const scored=kb.map(e=>{
+    let kw=kwScore(e,q), sem=qv?semScore(e,qv):0;
+    if(followUp){ kw=Math.max(kw,kwScore(e,kq2)-0.5); if(qv2) sem=Math.max(sem,semScore(e,qv2)-0.02); }
+    return {e,kw,sem,total:qv?sem+0.02*Math.min(Math.max(kw,0),10):kw};
+  }).sort((a,b)=>b.total-a.total);
+
+  const top=scored[0];
+  let ok=false, sure=false;
+  if(qv){ ok=top.sem>=SEM_MAYBE || top.kw>=5; sure=top.sem>=SEM_SURE; }
+  else  { ok=top.kw>=2.5; sure=top.kw>=5; }
+  if(!ok) return {type:"unknown",suggest:scored.filter(x=>!x.e.small&&(qv?x.sem>=0.3:x.kw>0)).slice(0,3).map(x=>x.e)};
+
+  if(!top.e.small) ctx.last=top.e;
+  const gap=qv?0.04:1.5;
+  const alts=scored.slice(1,4).filter(x=>!x.e.small && x.total>=top.total-gap).slice(0,2).map(x=>x.e);
+  return {type:"answer",t:top.e.t,a:top.e.a,n:top.e.n||[],alts:sure?alts.slice(0,1):alts,unsure:!sure};
+}
+
+/* =====================================================================
+   الواجهة
+   ===================================================================== */
+const $=id=>document.getElementById(id), thread=$("thread"), box=$("box");
+let misses=[]; try{misses=JSON.parse(localStorage.getItem("misses")||"[]")}catch(e){}
+function saveMisses(){try{localStorage.setItem("misses",JSON.stringify(misses.slice(-200)))}catch(e){} $("missN").textContent=misses.length; $("missN").hidden=!misses.length;}
+saveMisses();
+
+const el=(tag,cls,text)=>{const d=document.createElement(tag);if(cls)d.className=cls;if(text!=null)d.textContent=text;return d};
+const scroll=()=>{thread.scrollTop=thread.scrollHeight};
+function chips(list,parent,fn){if(!list.length)return;const c=el("div","chips");list.forEach(t=>{const b=el("button","chip",typeof t==="string"?t:t.label);b.type="button";b.onclick=()=>fn(t);c.appendChild(b)});parent.appendChild(c)}
+function showEntry(e){ctx.last=e;bot({type:"answer",t:e.t,a:e.a,n:e.n||[]})}
+
+function bot(res,question){
+  const d=el("div","msg bot");
+  if(res.type==="answer"){
+    if(res.t) d.appendChild(el("div","tag",res.t));
+    d.appendChild(el("div","",res.a));
+    if(res.alts&&res.alts.length){ d.appendChild(el("div","small",res.unsure?"مش متأكد ١٠٠٪، يمكن تقصد:":"ممكن كمان يفيدك:")); chips(res.alts.map(e=>({label:e.t,e})),d,x=>{me(x.e.t);showEntry(x.e)}); }
+    chips(res.n||[],d,ask);
+    if(res.unsure&&question){ misses.push({q:question,d:new Date().toISOString().slice(0,10),guess:res.t}); saveMisses(); }
+  }else{
+    d.classList.add("unsure");
+    d.appendChild(el("div","","مش متأكد إني فاهم سؤالك، ومش عايز أجاوبك غلط."));
+    if(res.suggest.length){d.appendChild(el("div","small","يمكن تقصد:"));chips(res.suggest.map(e=>({label:e.t,e})),d,x=>{me(x.e.t);showEntry(x.e)})}
+    const c=el("div","chips"),t=el("button","chip teach","علّمني الإجابة");t.type="button";t.onclick=()=>teach(d,question,t);c.appendChild(t);d.appendChild(c);
+    misses.push({q:question,d:new Date().toISOString().slice(0,10)}); saveMisses();
+  }
+  thread.appendChild(d); scroll();
+}
+function me(text){thread.appendChild(el("div","msg me",text));scroll()}
+function teach(d,question,btn){
+  btn.remove();
+  const w=el("div","teachbox");
+  w.appendChild(el("div","small","السؤال: «"+question+"». اكتب الإجابة الصح:"));
+  const ta=el("textarea");ta.rows=3;ta.id="teach-"+Date.now();w.appendChild(ta);
+  const ok=el("button","chip teach","احفظ");ok.type="button";
+  ok.onclick=async()=>{const a=ta.value.trim();if(!a)return;learned.push({q:question,a});try{localStorage.setItem("learned",JSON.stringify(learned))}catch(e){}
+    if(Sem.ready){try{Sem.vecs.set("L"+(learned.length-1),[await Sem.embed(question)])}catch(e){}}
+    w.replaceWith(el("div","small","اتحفظت ✓ المرة الجاية هجاوب بيها."))};
+  w.appendChild(ok);d.appendChild(w);ta.focus();scroll();
+}
+let busy=false;
+async function ask(text){
+  text=String(text).trim(); if(!text||busy) return;
+  const w=thread.querySelector(".welcome"); if(w) w.remove();
+  me(text); busy=true;
+  try{ bot(await think(text),text); } finally{ busy=false; }
+}
+function welcome(){
+  const w=el("div","welcome");
+  w.appendChild(el("h2","","اسألني عن زراعة الفراولة"));
+  w.appendChild(el("div","","اكتب بالعامي وبطريقتك. من الشتلة لحد البيع."));
+  chips(["امتى أزرع الفريجو؟","أسقي كل كام يوم؟","الورق بيصفر ليه؟","نص فدان محتاج كام شتلة؟","الثمرة عليها تراب رمادي"],w,ask);
+  thread.appendChild(w);
+}
+$("form").addEventListener("submit",e=>{e.preventDefault();const t=box.value;box.value="";size();ask(t)});
+box.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&matchMedia("(pointer:fine)").matches){e.preventDefault();$("form").requestSubmit()}});
+function size(){box.style.height="auto";box.style.height=Math.min(box.scrollHeight,130)+"px"}
+box.addEventListener("input",size);
+$("clear").onclick=()=>{thread.innerHTML="";ctx.last=null;welcome()};
+welcome();
+
+// لوحة الأسئلة اللي ما فهمهاش
+function missesText(){return misses.map((m,i)=>`${i+1}. ${m.q}${m.guess?"  (خمّنت: "+m.guess+")":""}`).join("\n")}
+$("missesBtn").onclick=()=>{const ol=$("missList");ol.innerHTML="";if(!misses.length)ol.appendChild(el("li","small","لسه مفيش."));misses.forEach(m=>ol.appendChild(el("li","",m.q+(m.guess?"  (خمّنت: "+m.guess+")":""))));$("panel").hidden=false};
+$("closePanel").onclick=()=>{$("panel").hidden=true};
+$("clearMisses").onclick=()=>{misses=[];saveMisses();$("missesBtn").onclick()};
+$("copyMisses").onclick=async()=>{const t=missesText();try{await navigator.clipboard.writeText(t);$("copyMisses").textContent="اتنسخت ✓"}catch(e){const ta=$("missText");ta.hidden=false;ta.value=t;ta.select()}};
+
+function setMode(cls,text){$("mode").className="mode "+cls;$("modeText").textContent=text}
+window.__app={Sem,setMode,KB,KB_VERSION};
+if(location.protocol.startsWith("http")&&"serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+
+<script type="module">
+/* تحميل موديل فهم المعنى (أول مرة محتاج نت ~120 ميجا، وبعدها من الكاش) */
+const {Sem,setMode,KB,KB_VERSION}=window.__app;
+const MODEL="Xenova/paraphrase-multilingual-MiniLM-L12-v2";
+const LIB="https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/dist/transformers.web.min.js";
+
+function toB64(f32){const u=new Uint8Array(f32.buffer);let s="";for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
+function fromB64(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return new Float32Array(u.buffer)}
+
+(async()=>{
+  try{
+    setMode("loading","بيجهّز الفهم الذكي…");
+    const {pipeline,env}=await import(LIB);
+    env.allowLocalModels=false;
+    const files={};
+    const ext=await pipeline("feature-extraction",MODEL,{dtype:"q8",device:"wasm",progress_callback:p=>{
+      if(p.status==="progress"&&p.total){files[p.file]=[p.loaded,p.total];let L=0,T=0;for(const [l,t] of Object.values(files)){L+=l;T+=t}
+        setMode("loading",`بينزّل الفهم الذكي ${Math.round(L/T*100)}٪ (أول مرة بس)`);}
+    }});
+    const embedMany=async texts=>{const out=await ext(texts,{pooling:"mean",normalize:true});const [n,d]=out.dims;const data=out.data;const r=[];for(let i=0;i<n;i++)r.push(Float32Array.from(data.subarray(i*d,(i+1)*d)));return r};
+    Sem.embed=async t=>(await embedMany([t]))[0];
+
+    // معاني الأسئلة: من الكاش لو موجودة، وإلا تتحسب مرة واحدة
+    const key="emb:"+KB_VERSION+":"+MODEL;
+    let cached=null; try{cached=JSON.parse(localStorage.getItem(key)||"null")}catch(e){}
+    if(cached){ for(const [id,arr] of Object.entries(cached)) Sem.vecs.set(id,arr.map(fromB64)); }
+    else{
+      const store={}; let done=0;
+      for(const e of KB){
+        const texts=[...(e.q||[]),...(e.t?[e.t]:[])];
+        const vs=await embedMany(texts); Sem.vecs.set(e.id,vs); store[e.id]=vs.map(toB64);
+        done++; setMode("loading",`بيذاكر المعلومات ${Math.round(done/KB.length*100)}٪`);
+      }
+      try{ for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith("emb:"))localStorage.removeItem(k)} localStorage.setItem(key,JSON.stringify(store)); }catch(e){}
+    }
+    let learned=[]; try{learned=JSON.parse(localStorage.getItem("learned")||"[]")}catch(e){}
+    for(let i=0;i<learned.length;i++){ Sem.vecs.set("L"+i,[await Sem.embed(learned[i].q)]); }
+    Sem.ready=true;
+    setMode("smart","الفهم الذكي شغال");
+  }catch(err){
+    console.warn(err);
+    setMode("","الفهم البسيط (الذكي محتاج نت أول مرة)");
+  }
+})();
+</script>
+</body>
+</html>
